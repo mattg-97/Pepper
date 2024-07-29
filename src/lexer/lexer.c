@@ -15,7 +15,7 @@ typedef struct {
 Lexer lexer;
 
 // initialize the scanner with sensible defaults
-void initScanner(const char* source) {
+void initLexer(const char* source) {
     lexer.start = source;
     lexer.current = source;
     lexer.line = 1;
