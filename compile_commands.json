@@ -1,0 +1,18 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-g",
+      "-Wall",
+      "-Werror",
+      "-Isrc",
+      "-c",
+      "-o",
+      "obj/main.o",
+      "src/main.c"
+    ],
+    "directory": "/Users/matthewgill/dev/C/Pepper",
+    "file": "/Users/matthewgill/dev/C/Pepper/src/main.c",
+    "output": "/Users/matthewgill/dev/C/Pepper/obj/main.o"
+  }
+]
