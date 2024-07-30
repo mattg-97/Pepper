@@ -1,5 +1,5 @@
 // comments
-@import "std";
+@import "std/io" as io;
 
 enum HairColor {
     Brown,
@@ -41,13 +41,17 @@ fn higher_or_lower(a: int32, b: Int) String {
 
 void main() {
     person := Person::new(.name: "John", .age: 30, .hair_color: HairColor::Red).
-    std::print(person.name).
-    std::print(person.age).
+    io::print(person.name).
+    io::print(person.age).
+
+    for (i := 0; i < 10) |i++| {
+        io::print(i).
+    }
 
     x := 10 - 5.
 
-    if (x > 0) ? std::print("x is positive") : std::print("x is negative").
+    if (x > 0) ? io::print("x is positive") : io::print("x is negative").
 
     answer := higher_or_lower(10, 20).
-    std::print(answer).
+    io::print(answer).
 }

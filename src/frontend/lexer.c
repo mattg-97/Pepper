@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <string.h>
 
 #include "lexer.h"
@@ -25,7 +26,7 @@ static bool isAtEnd() {
     return *lexer.current == '\0';
 }
 
-static Token makeToken(TokenType type) {
+static Token createToken(TokenType type) {
     Token token;
     token.type = type;
     token.length = (int)(lexer.current - lexer.start);
@@ -62,4 +63,38 @@ static char peek() {
 static char peekNext() {
     if (isAtEnd()) return '\0';
     return lexer.current[1];
+}
+
+void skipWhitespace() {
+
+}
+
+static bool isAlpha(char c) {
+    return (c >= 'a' && c <= 'z') ||
+            (c >= 'A' && c <= 'Z') ||
+            // we want to be able to have variables such as hello_func
+            c == '_';
+}
+
+static Token identifier() {
+    return createToken(TOKEN_IDENTIFIER);
+}
+
+Token scanToken() {
+    //skip any whitespace
+    skipWhitespace();
+    lexer.current = lexer.start;
+
+    if (isAtEnd()) return createToken(TOKEN_EOF);
+
+
+    char c = advance();
+    if (isAlpha(c)) return identifier();
+    switch (c) {
+        case '{': return createToken(TOKEN_LEFT_BRACE);
+        case '}': return createToken(TOKEN_RIGHT_BRACE);
+        case '(': return createToken(TOKEN_LEFT_PAREN);
+        case ')': return createToken(TOKEN_RIGHT_PAREN);
+    }
+    return errorToken("Unidentified token.");
 }
