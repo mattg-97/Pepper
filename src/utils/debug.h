@@ -4,7 +4,6 @@
 #include <common.h>
 #include "../frontend/lexer.h"
 
-const char* print_token_type(TokenType type);
-char* print_token_literal(Token* token);
+void debug_token(Token* token);
 
 #endif

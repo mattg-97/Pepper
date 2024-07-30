@@ -155,13 +155,9 @@ void tokenize() {
     Token token = scan_token();
     do {
 #ifdef DEBUG_MODE
-        char* literal = print_token_literal(&token);
-        INFO("Token: |%s|  Type: |%s|", literal, print_token_type(token.type));
-        free(literal);
+        debug_token(&token);
 #endif
         token = scan_token();
     } while (token.type != TOKEN_EOF);
-    char* literal = print_token_literal(&token);
-    INFO("Token: |%s|  Type: |%s|", print_token_literal(&token), print_token_type(token.type));
-    free(literal);
+    debug_token(&token);
 }

@@ -1,6 +1,7 @@
 #include "debug.h"
+#include "logger.h"
 
-const char* print_token_type(TokenType type) {
+static const char* print_token_type(TokenType type) {
     switch (type) {
         case TOKEN_AND: return "TOKEN_AND";
         case TOKEN_LEFT_BRACE: return "TOKEN_LEFT_BRACE";
@@ -17,7 +18,8 @@ const char* print_token_type(TokenType type) {
     }
     return "TOKEN_UNKNOWN";
 }
-char* print_token_literal(Token* token) {
+
+static char* print_token_literal(Token* token) {
     char* literal = (char*)malloc(token->length + 1);
     if (literal == NULL) {
         return NULL;
@@ -27,4 +29,11 @@ char* print_token_literal(Token* token) {
     }
     literal[token->length] = '\0';
     return literal;
+}
+
+void debug_token(Token* token) {
+    char* literal = print_token_literal(token);
+    const char* type = print_token_type(token->type);
+    INFO("Token: |%s|  Type: |%s|", literal, type);
+    free(literal);
 }
