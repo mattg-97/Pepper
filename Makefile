@@ -11,7 +11,7 @@ SRCS = $(shell find $(SRCDIR) -type f -name "*.c")
 # Generate corresponding .o file names
 OBJS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
 # Generate include directories
-INCLUDES = -I$(SRCDIR) $(shell find $(SRCDIR)/lib -type d -exec echo -I{} \;)
+INCLUDES = -I$(SRCDIR) $(shell find $(SRCDIR) -type d -exec echo -I{} \;)
 
 .PHONY: all clean run bear
 

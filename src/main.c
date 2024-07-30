@@ -1,6 +1,6 @@
 #include "common.h"
-#include "utils/logger.h"
-#include "frontend/lexer.h"
+#include "logger.h"
+#include "lexer.h"
 
 static void repl() {
     char line[1024];

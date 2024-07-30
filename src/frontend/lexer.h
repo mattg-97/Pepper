@@ -16,6 +16,7 @@ typedef enum {
   TOKEN_GREATER, TOKEN_GREATER_EQUAL,
   TOKEN_LESS, TOKEN_LESS_EQUAL,
   TOKEN_ASSIGN, TOKEN_COLON_COLON,
+  TOKEN_DECREMENT, TOKEN_INCREMENT,
   // Literals.
   TOKEN_IDENTIFIER, TOKEN_STRING, TOKEN_NUMBER,
   // Keywords.
@@ -23,7 +24,7 @@ typedef enum {
   TOKEN_FOR, TOKEN_FN, TOKEN_IF, TOKEN_NIL, TOKEN_OR,
   TOKEN_PRINT, TOKEN_RETURN,
   TOKEN_TRUE, TOKEN_LET, TOKEN_WHILE, TOKEN_METHOD,
-  TOKEN_ENUM, TOKEN_CONST, TOKEN_IMPORT, TOKEN_AS,
+  TOKEN_ENUM, TOKEN_CONST, TOKEN_AS,
   TOKEN_MUT, TOKEN_VOID,
 
   TOKEN_ERROR, TOKEN_EOF
@@ -32,8 +33,8 @@ typedef enum {
 typedef struct {
     TokenType type;
     const char* start;
-    int length;
-    int line;
+    size_t length;
+    size_t line;
 } Token;
 
 void init_lexer(const char* source);
