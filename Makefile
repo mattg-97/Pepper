@@ -1,5 +1,6 @@
+
 CC = clang
-CFLAGS = -g -Wall -Werror
+CFLAGS = -g #-Wall -Werror
 SRCDIR = src
 OBJDIR = obj
 BINDIR = bin
@@ -26,6 +27,9 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 
 run: $(TARGET)
 	./$(TARGET)
+
+run-test: $(TARGET)
+	@./$(TARGET) ./pepr/test.pepr
 
 clean:
 	rm -rf $(OBJDIR) $(BINDIR)

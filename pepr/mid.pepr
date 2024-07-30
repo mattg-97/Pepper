@@ -1,0 +1,12 @@
+void main() {
+    five := 5.
+    ten := 10.
+    // Comments
+    result := add(five, ten).
+
+    print(result);
+}
+
+fn add(a: Int, b: Int) Int {
+    return a + b.
+}

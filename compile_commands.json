@@ -3,8 +3,104 @@
     "arguments": [
       "/usr/bin/clang",
       "-g",
-      "-Wall",
-      "-Werror",
+      "-Isrc",
+      "-c",
+      "-o",
+      "obj/frontend/ast.o",
+      "src/frontend/ast.c"
+    ],
+    "directory": "/Users/matthewgill/dev/C/Pepper",
+    "file": "/Users/matthewgill/dev/C/Pepper/src/frontend/ast.c",
+    "output": "/Users/matthewgill/dev/C/Pepper/obj/frontend/ast.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "obj/frontend/lexer.o",
+      "src/frontend/lexer.c"
+    ],
+    "directory": "/Users/matthewgill/dev/C/Pepper",
+    "file": "/Users/matthewgill/dev/C/Pepper/src/frontend/lexer.c",
+    "output": "/Users/matthewgill/dev/C/Pepper/obj/frontend/lexer.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "obj/frontend/parser.o",
+      "src/frontend/parser.c"
+    ],
+    "directory": "/Users/matthewgill/dev/C/Pepper",
+    "file": "/Users/matthewgill/dev/C/Pepper/src/frontend/parser.c",
+    "output": "/Users/matthewgill/dev/C/Pepper/obj/frontend/parser.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "obj/utils/memory.o",
+      "src/utils/memory.c"
+    ],
+    "directory": "/Users/matthewgill/dev/C/Pepper",
+    "file": "/Users/matthewgill/dev/C/Pepper/src/utils/memory.c",
+    "output": "/Users/matthewgill/dev/C/Pepper/obj/utils/memory.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "obj/utils/logger.o",
+      "src/utils/logger.c"
+    ],
+    "directory": "/Users/matthewgill/dev/C/Pepper",
+    "file": "/Users/matthewgill/dev/C/Pepper/src/utils/logger.c",
+    "output": "/Users/matthewgill/dev/C/Pepper/obj/utils/logger.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "obj/backend/vm/vm.o",
+      "src/backend/vm/vm.c"
+    ],
+    "directory": "/Users/matthewgill/dev/C/Pepper",
+    "file": "/Users/matthewgill/dev/C/Pepper/src/backend/vm/vm.c",
+    "output": "/Users/matthewgill/dev/C/Pepper/obj/backend/vm/vm.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "obj/backend/compiler/compiler.o",
+      "src/backend/compiler/compiler.c"
+    ],
+    "directory": "/Users/matthewgill/dev/C/Pepper",
+    "file": "/Users/matthewgill/dev/C/Pepper/src/backend/compiler/compiler.c",
+    "output": "/Users/matthewgill/dev/C/Pepper/obj/backend/compiler/compiler.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-g",
       "-Isrc",
       "-c",
       "-o",

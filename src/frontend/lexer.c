@@ -2,6 +2,8 @@
 #include <string.h>
 
 #include "lexer.h"
+#include "../utils/logger.h"
+#include "../utils/debug.h"
 
 typedef struct {
     // marks the beginning of the current lexeme (word) being scanned
@@ -31,7 +33,7 @@ static Token createToken(TokenType type) {
     token.type = type;
     token.length = (int)(lexer.current - lexer.start);
     token.line = lexer.line;
-    token.start = lexer.current;
+    token.start = lexer.start;
     return token;
 }
 
@@ -66,7 +68,30 @@ static char peekNext() {
 }
 
 void skipWhitespace() {
-
+    for (;;) {
+        // peek the char
+        char c = peek();
+        switch (c) {
+            case ' ':
+            case '\r':
+            case '\t':
+                advance();
+                break;
+            case '\n':
+                lexer.line++;
+                advance();
+                break;
+            case '/':
+                if (peekNext() == '/') {
+                    while (peek() != '\n' && !isAtEnd()) advance();
+                } else {
+                    return;
+                }
+                break;
+            default:
+                return;
+        }
+    }
 }
 
 static bool isAlpha(char c) {
@@ -83,18 +108,35 @@ static Token identifier() {
 Token scanToken() {
     //skip any whitespace
     skipWhitespace();
-    lexer.current = lexer.start;
+    lexer.start = lexer.current;
 
     if (isAtEnd()) return createToken(TOKEN_EOF);
 
-
     char c = advance();
-    if (isAlpha(c)) return identifier();
+    //if (isAlpha(c)) return identifier();
     switch (c) {
         case '{': return createToken(TOKEN_LEFT_BRACE);
         case '}': return createToken(TOKEN_RIGHT_BRACE);
         case '(': return createToken(TOKEN_LEFT_PAREN);
         case ')': return createToken(TOKEN_RIGHT_PAREN);
+        case '.': return createToken(TOKEN_DOT);
+        case ',': return createToken(TOKEN_COMMA);
+        case '-': return createToken(TOKEN_MINUS);
+        case '+': return createToken(TOKEN_PLUS);
+        case ';': return createToken(TOKEN_SEMICOLON);
+        case '/': return createToken(TOKEN_SLASH);
+        case '*': return createToken(TOKEN_STAR);
+        case '?': return createToken(TOKEN_QUESTION_MARK);
+        case '@': return createToken(TOKEN_AT);
+        case 0: return createToken(TOKEN_EOF);
     }
-    return errorToken("Unidentified token.");
+    return errorToken("Unidentified token!");
+}
+
+void scanTokens() {
+    Token token = scanToken();
+    while (token.type != TOKEN_EOF) {
+        INFO("Token: |%s|  Type: |%s|", print_token_literal(&token), print_token_type(token.type));
+        token = scanToken();
+    }
 }
