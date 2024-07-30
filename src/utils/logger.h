@@ -59,5 +59,4 @@ void log_output(LogLevel level, const char* message, ...);
 #else
 #define TRACE(message, ...)
 #endif
-
 #endif

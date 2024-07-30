@@ -1,6 +1,6 @@
 
 CC = clang
-CFLAGS = -g #-Wall -Werror
+CFLAGS = -g #-Wall -Werror -Wextra -std=c99
 SRCDIR = src
 OBJDIR = obj
 BINDIR = bin

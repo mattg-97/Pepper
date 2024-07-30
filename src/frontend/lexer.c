@@ -1,4 +1,3 @@
-#include <ctype.h>
 #include <string.h>
 
 #include "lexer.h"
@@ -18,17 +17,17 @@ typedef struct {
 Lexer lexer;
 
 // initialize the scanner with sensible defaults
-void initLexer(const char* source) {
+void init_lexer(const char* source) {
     lexer.start = source;
     lexer.current = source;
     lexer.line = 1;
 }
 
-static bool isAtEnd() {
+static bool is_at_end() {
     return *lexer.current == '\0';
 }
 
-static Token createToken(TokenType type) {
+static Token create_token(TokenType type) {
     Token token;
     token.type = type;
     token.length = (int)(lexer.current - lexer.start);
@@ -37,7 +36,7 @@ static Token createToken(TokenType type) {
     return token;
 }
 
-static Token errorToken(const char* message) {
+static Token error_token(const char* message) {
     Token token;
     token.type = TOKEN_ERROR;
     token.length = (int)strlen(message);
@@ -52,7 +51,7 @@ static char advance() {
 }
 
 static bool match(char expected) {
-    if (isAtEnd()) return false;
+    if (is_at_end()) return false;
     if (*lexer.current != expected) return false;
     lexer.current++;
     return true;
@@ -63,11 +62,11 @@ static char peek() {
 }
 
 static char peekNext() {
-    if (isAtEnd()) return '\0';
+    if (is_at_end()) return '\0';
     return lexer.current[1];
 }
 
-void skipWhitespace() {
+void skip_whitespace() {
     for (;;) {
         // peek the char
         char c = peek();
@@ -83,7 +82,7 @@ void skipWhitespace() {
                 break;
             case '/':
                 if (peekNext() == '/') {
-                    while (peek() != '\n' && !isAtEnd()) advance();
+                    while (peek() != '\n' && !is_at_end()) advance();
                 } else {
                     return;
                 }
@@ -94,49 +93,75 @@ void skipWhitespace() {
     }
 }
 
-static bool isAlpha(char c) {
+static bool is_alpha(char c) {
     return (c >= 'a' && c <= 'z') ||
             (c >= 'A' && c <= 'Z') ||
             // we want to be able to have variables such as hello_func
             c == '_';
 }
 
-static Token identifier() {
-    return createToken(TOKEN_IDENTIFIER);
+static bool is_numeric(char c) {
+    return (c >= '0' && c <= '9');
 }
 
-Token scanToken() {
+static Token identifier() {
+    while (is_alpha(peek()) || is_numeric(peek())) advance();
+    return create_token(TOKEN_IDENTIFIER);
+}
+
+static Token number() {
+    while (is_numeric(peek())) advance();
+
+    if (peek() == '.' && is_numeric(peekNext())) {
+        advance();
+        while (is_numeric(peek())) advance();
+    }
+
+    return create_token(TOKEN_NUMBER);
+}
+
+Token scan_token() {
     //skip any whitespace
-    skipWhitespace();
+    skip_whitespace();
     lexer.start = lexer.current;
 
-    if (isAtEnd()) return createToken(TOKEN_EOF);
+    if (is_at_end()) return create_token(TOKEN_EOF);
 
     char c = advance();
-    //if (isAlpha(c)) return identifier();
+    if (is_numeric(c)) return number();
+    if (is_alpha(c)) return identifier();
     switch (c) {
-        case '{': return createToken(TOKEN_LEFT_BRACE);
-        case '}': return createToken(TOKEN_RIGHT_BRACE);
-        case '(': return createToken(TOKEN_LEFT_PAREN);
-        case ')': return createToken(TOKEN_RIGHT_PAREN);
-        case '.': return createToken(TOKEN_DOT);
-        case ',': return createToken(TOKEN_COMMA);
-        case '-': return createToken(TOKEN_MINUS);
-        case '+': return createToken(TOKEN_PLUS);
-        case ';': return createToken(TOKEN_SEMICOLON);
-        case '/': return createToken(TOKEN_SLASH);
-        case '*': return createToken(TOKEN_STAR);
-        case '?': return createToken(TOKEN_QUESTION_MARK);
-        case '@': return createToken(TOKEN_AT);
-        case 0: return createToken(TOKEN_EOF);
+        case '{': return create_token(TOKEN_LEFT_BRACE);
+        case '}': return create_token(TOKEN_RIGHT_BRACE);
+        case '(': return create_token(TOKEN_LEFT_PAREN);
+        case ')': return create_token(TOKEN_RIGHT_PAREN);
+        case '.': return create_token(TOKEN_DOT);
+        case ',': return create_token(TOKEN_COMMA);
+        case '-': return create_token(TOKEN_MINUS);
+        case '+': return create_token(TOKEN_PLUS);
+        case '/': return create_token(TOKEN_SLASH);
+        case '*': return create_token(TOKEN_STAR);
+        case '?': return create_token(TOKEN_QUESTION_MARK);
+        case '@': return create_token(TOKEN_AT);
+        case ':': return create_token(match('=') ? TOKEN_ASSIGN : TOKEN_COLON);
+        case ';': return create_token(TOKEN_SEMICOLON);
+        case '=': return create_token(match('=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL);
+        case '\0': return create_token(TOKEN_EOF);
     }
-    return errorToken("Unidentified token!");
+    return error_token("Unidentified token!");
 }
 
-void scanTokens() {
-    Token token = scanToken();
-    while (token.type != TOKEN_EOF) {
-        INFO("Token: |%s|  Type: |%s|", print_token_literal(&token), print_token_type(token.type));
-        token = scanToken();
-    }
+void tokenize() {
+    Token token = scan_token();
+    do {
+#ifdef DEBUG_MODE
+        char* literal = print_token_literal(&token);
+        INFO("Token: |%s|  Type: |%s|", literal, print_token_type(token.type));
+        free(literal);
+#endif
+        token = scan_token();
+    } while (token.type != TOKEN_EOF);
+    char* literal = print_token_literal(&token);
+    INFO("Token: |%s|  Type: |%s|", print_token_literal(&token), print_token_type(token.type));
+    free(literal);
 }

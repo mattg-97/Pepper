@@ -1,14 +1,14 @@
 #ifndef pepper_lexer_h
 #define pepper_lexer_h
 
-#include <common.h>
+#include "common.h"
 
 typedef enum {
   // Single-character tokens.
   TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN,
   TOKEN_LEFT_BRACE, TOKEN_RIGHT_BRACE,
   TOKEN_COMMA, TOKEN_DOT, TOKEN_MINUS, TOKEN_PLUS,
-  TOKEN_SEMICOLON, TOKEN_SLASH, TOKEN_STAR,
+  TOKEN_SEMICOLON, TOKEN_COLON, TOKEN_SLASH, TOKEN_STAR,
   TOKEN_QUESTION_MARK, TOKEN_AT,
   // One or two character tokens.
   TOKEN_BANG, TOKEN_BANG_EQUAL,
@@ -36,8 +36,8 @@ typedef struct {
     int line;
 } Token;
 
-void initLexer(const char* source);
-Token scanToken();
-void scanTokens();
+void init_lexer(const char* source);
+Token scan_token();
+void tokenize();
 
 #endif

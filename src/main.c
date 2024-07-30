@@ -18,7 +18,7 @@ static void repl() {
 
 }
 
-static char* readFile(const char* path) {
+static char* read_file(const char* path) {
     FILE* file = fopen(path, "rb");
     if (file == NULL) {
         fprintf(stderr, "Could not open file \"%s\".\n", path);
@@ -46,12 +46,12 @@ static char* readFile(const char* path) {
 }
 
 
-static void runFile(const char* path) {
+static void run_file(const char* path) {
     // read in the file
-    char* source = readFile(path);
+    char* source = read_file(path);
     // interpret the source code
-    initLexer(source);
-    scanTokens();
+    init_lexer(source);
+    tokenize();
     // then free the char array (we need to do this because readfile dynamically
     // allocates the memory and then passes ownership to this function)
     free(source);
@@ -65,7 +65,7 @@ int main(int argc, const char* argv[]) {
     if (argc == 1) {
         repl();
     } else if (argc == 2) {
-        runFile(argv[1]);
+        run_file(argv[1]);
     } else {
         fprintf(stderr, "Usage: pepper [path]\n");
         exit(64);
