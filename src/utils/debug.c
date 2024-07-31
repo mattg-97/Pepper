@@ -67,3 +67,11 @@ void debug_token(Token* token) {
     const char* type = print_token_type(token->type);
     INFO("Token: |%s|  Type: |%s|", token->literal, type);
 }
+
+void debug_binary_expression(Visitor* visitor, Binary* binary) {
+    printf("Binary Expression: (");
+    binary->left->accept(binary->left, visitor);
+    printf(" %s ", print_token_type(binary->operator));
+    binary->right->accept(binary->right, visitor);
+    printf(")\n");
+}

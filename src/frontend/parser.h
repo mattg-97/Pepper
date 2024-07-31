@@ -15,5 +15,6 @@ Parser* init_parser(Token* tokens);
 void de_init_parser();
 void next_token();
 Program* parse_program();
+Binary* parse_binary();
 
 #endif

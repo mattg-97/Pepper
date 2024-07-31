@@ -50,7 +50,7 @@ static void run_file(const char* path) {
     Lexer* lexer = init_lexer(source);
     tokenize();
     init_parser(lexer->tokens);
-    
+    Binary* bin = parse_binary();
     //de_init_parser();
     de_init_lexer();
     free(source);

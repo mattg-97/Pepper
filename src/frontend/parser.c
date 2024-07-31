@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "logger.h"
+#include "debug.h"
 
 Parser parser;
 
@@ -47,7 +48,7 @@ static bool expect_peek(TokenType type) {
     }
 }
 
-AssignmentStatement* parse_assignment() {
+/*static AssignmentStatement* parse_assignment() {
     AssignmentStatement* assignment = (AssignmentStatement*)malloc(sizeof(AssignmentStatement));
 
     if (!expect_peek(TOKEN_ASSIGN)) return NULL;
@@ -62,7 +63,8 @@ AssignmentStatement* parse_assignment() {
     return assignment;
 }
 
-Statement* parse_statement() {
+static AssignmentStatement* parse_statement() {
+    Statement* statement = (Statement*)malloc(sizeof(Statement));
     switch (parser.currentToken.type) {
         case TOKEN_IDENTIFIER: {
             if (parser.peekToken.type == TOKEN_ASSIGN) {
@@ -76,7 +78,7 @@ Statement* parse_statement() {
         }
     }
     return NULL;
-}
+} */
 
 Program* parse_program() {
     Program* program = (Program*)malloc(sizeof(Program));
@@ -89,4 +91,19 @@ Program* parse_program() {
     } while (parser.currentToken.type != TOKEN_EOF);
 
     return program;
+}
+
+Binary* parse_binary() {
+    ConcreteVisitor* visitor = init_visitor();
+
+    int a_val = atoi(parser.currentToken.literal);
+    next_token();
+    int b_val = atoi(parser.peekToken.literal);
+    Literal a = init_literal(a_val);
+    Literal b = init_literal(b_val);
+    Binary bin = init_binary((Expression*)&a, TOKEN_PLUS, (Expression*)&b);
+
+    bin.base.accept((Expression*)&bin, (Visitor*)visitor);
+    debug_binary_expression(&visitor->base, &bin);
+    return &bin;
 }
