@@ -1,6 +1,6 @@
 
 CC = clang
-CFLAGS = -g #-Wall -Werror -Wextra -std=c99
+CFLAGS = -g3 -Wall -Werror -Wextra -Wdouble-promotion -Wconversion -fsanitize=address,undefined -std=c99
 SRCDIR = src
 OBJDIR = obj
 BINDIR = bin

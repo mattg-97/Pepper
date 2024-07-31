@@ -5,7 +5,7 @@ bool assert_eq_int(int a, int b) {
 }
 
 bool assert_eq_float(float a, float b) {
-    return fabs(a - b) < 1e-6;
+    return fabsf(a - b) < (float)1e-6;
 }
 
 bool assert_eq_double(double a, double b) {

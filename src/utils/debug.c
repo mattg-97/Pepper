@@ -68,7 +68,7 @@ static char* print_token_literal(Token* token) {
     if (literal == NULL) {
         return NULL;
     }
-    for (int i = 0; i < token->length; i++) {
+    for (size_t i = 0; i < token->length; i++) {
         literal[i] = token->start[i];
     }
     literal[token->length] = '\0';

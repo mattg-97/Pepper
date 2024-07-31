@@ -5,15 +5,13 @@
 static void repl() {
     char line[1024];
     for (;;) {
-        // print a helper character at the start of each repl line
-        printf("-> ");
-        // get stdin and load into char array
+        printf(">> ");
         if (!fgets(line, sizeof(line), stdin)) {
             printf("\n");
             break;
         }
-        // interpret that line
-        printf("%s\n", line);
+        init_lexer(line);
+        tokenize();
     }
 
 }
@@ -26,7 +24,7 @@ static char* read_file(const char* path) {
     }
 
     fseek(file, 0L, SEEK_END);
-    size_t fileSize = ftell(file);
+    size_t fileSize = (size_t)ftell(file);
     rewind(file);
 
     char* buffer = (char*)malloc(fileSize + 1);
@@ -47,13 +45,9 @@ static char* read_file(const char* path) {
 
 
 static void run_file(const char* path) {
-    // read in the file
     char* source = read_file(path);
-    // interpret the source code
     init_lexer(source);
     tokenize();
-    // then free the char array (we need to do this because readfile dynamically
-    // allocates the memory and then passes ownership to this function)
     free(source);
 
     // exit codes differ for each error

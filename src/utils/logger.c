@@ -24,7 +24,7 @@ void log_output(LogLevel level, const char* message, ...) {
     va_end(argPtr);
 
     char outMessage2[messageLength];
-    sprintf(outMessage2, "%s%s\n", levelStrings[level], outMessage);
+    snprintf(outMessage2, messageLength, "%s%s\n", levelStrings[level], outMessage);
     if (isError) {
         fprintf(stderr, "%s\n", outMessage2);
         exit(1);

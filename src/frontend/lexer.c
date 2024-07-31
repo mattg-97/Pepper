@@ -10,7 +10,7 @@ typedef struct {
     // the current character being looked at
     const char* current;
     // the current line number we are scanning
-    int line;
+    size_t line;
 } Lexer;
 
 // scanner variable
@@ -30,7 +30,7 @@ static bool is_at_end() {
 static Token create_token(TokenType type) {
     Token token;
     token.type = type;
-    token.length = (int)(lexer.current - lexer.start);
+    token.length = (size_t)(lexer.current - lexer.start);
     token.line = lexer.line;
     token.start = lexer.start;
     return token;
@@ -39,7 +39,7 @@ static Token create_token(TokenType type) {
 static Token error_token(const char* message) {
     Token token;
     token.type = TOKEN_ERROR;
-    token.length = (int)strlen(message);
+    token.length = (size_t)strlen(message);
     token.line = lexer.line;
     token.start = message;
     return token;
@@ -105,7 +105,7 @@ static bool is_numeric(char c) {
 }
 
 static TokenType check_for_keyword(size_t start, size_t length, const char* rest, TokenType type) {
-    if (lexer.current - lexer.start == start + length
+    if ((size_t)(lexer.current - lexer.start) == start + length
         && memcmp(lexer.start + start, rest, length) == 0) {
         return type;
     }
