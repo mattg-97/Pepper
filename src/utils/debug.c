@@ -63,21 +63,7 @@ static const char* print_token_type(TokenType type) {
     return "TOKEN_UNKNOWN";
 }
 
-static char* print_token_literal(Token* token) {
-    char* literal = (char*)malloc(token->length + 1);
-    if (literal == NULL) {
-        return NULL;
-    }
-    for (size_t i = 0; i < token->length; i++) {
-        literal[i] = token->start[i];
-    }
-    literal[token->length] = '\0';
-    return literal;
-}
-
 void debug_token(Token* token) {
-    char* literal = print_token_literal(token);
     const char* type = print_token_type(token->type);
-    INFO("Token: |%s|  Type: |%s|", literal, type);
-    free(literal);
+    INFO("Token: |%s|  Type: |%s|", token->literal, type);
 }

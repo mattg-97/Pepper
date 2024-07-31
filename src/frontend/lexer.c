@@ -4,27 +4,57 @@
 #include "logger.h"
 #include "debug.h"
 
-typedef struct {
-    // marks the beginning of the current lexeme (word) being scanned
-    const char* start;
-    // the current character being looked at
-    const char* current;
-    // the current line number we are scanning
-    size_t line;
-} Lexer;
-
 // scanner variable
 Lexer lexer;
 
 // initialize the scanner with sensible defaults
-void init_lexer(const char* source) {
+Lexer* init_lexer(const char* source) {
     lexer.start = source;
     lexer.current = source;
     lexer.line = 1;
+    lexer.tokens = NULL;
+    lexer.tokenCapacity = 0;
+    lexer.tokenCount = 0;
+    return &lexer;
+}
+void de_init_lexer() {
+    for (size_t i = 0; i < lexer.tokenCount; i++) {
+        free(lexer.tokens[i].literal);
+    }
+    free(lexer.tokens);
+    lexer.tokens = NULL;
+    lexer.tokenCount = 0;
+    lexer.tokenCapacity = 0;
+}
+
+void add_token(Token token) {
+    if (lexer.tokenCount == lexer.tokenCapacity) {
+        lexer.tokenCapacity = lexer.tokenCapacity == 0 ? 8 : lexer.tokenCapacity * 2;
+        lexer.tokens = realloc(lexer.tokens, lexer.tokenCapacity * sizeof(Token));
+        if (lexer.tokens == NULL) {
+            ERROR("Failed to allocate memory for tokens.");
+            exit(EXIT_FAILURE);
+        }
+    }
+    lexer.tokens[lexer.tokenCount] = token;
+    lexer.tokenCount++;
 }
 
 static bool is_at_end() {
     return *lexer.current == '\0';
+}
+
+static char* literal(Token* token) {
+    char* literal = (char*)malloc(token->length + 1);
+    if (literal == NULL) {
+        ERROR("Unable to allocate memory for token literal.");
+        exit(EXIT_FAILURE);
+    }
+    for (size_t i = 0; i < token->length; i++) {
+        literal[i] = token->start[i];
+    }
+    literal[token->length] = '\0';
+    return literal;
 }
 
 static Token create_token(TokenType type) {
@@ -33,6 +63,8 @@ static Token create_token(TokenType type) {
     token.length = (size_t)(lexer.current - lexer.start);
     token.line = lexer.line;
     token.start = lexer.start;
+    token.literal = literal(&token);
+    add_token(token);
     return token;
 }
 
@@ -42,6 +74,8 @@ static Token error_token(const char* message) {
     token.length = (size_t)strlen(message);
     token.line = lexer.line;
     token.start = message;
+    token.literal = literal(&token);
+    add_token(token);
     return token;
 }
 
@@ -225,10 +259,12 @@ Token scan_token() {
 void tokenize() {
     Token token = scan_token();
     do {
-#ifdef DEBUG_MODE
+#ifdef DEBUG_MODE_TOKEN
         debug_token(&token);
 #endif
         token = scan_token();
     } while (token.type != TOKEN_EOF);
+#ifdef DEBUG_MODE_TOKEN
     debug_token(&token);
+#endif
 }

@@ -1,6 +1,7 @@
 #include "common.h"
 #include "logger.h"
 #include "lexer.h"
+#include "parser.h"
 
 static void repl() {
     char line[1024];
@@ -13,7 +14,7 @@ static void repl() {
         init_lexer(line);
         tokenize();
     }
-
+    de_init_lexer();
 }
 
 static char* read_file(const char* path) {
@@ -46,10 +47,13 @@ static char* read_file(const char* path) {
 
 static void run_file(const char* path) {
     char* source = read_file(path);
-    init_lexer(source);
+    Lexer* lexer = init_lexer(source);
     tokenize();
+    init_parser(lexer->tokens);
+    
+    //de_init_parser();
+    de_init_lexer();
     free(source);
-
     // exit codes differ for each error
     //if (result == INTERPRET_COMPILE_ERROR) exit(65);
     //if (result == INTERPRET_RUNTIME_ERROR) exit(70);

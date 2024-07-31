@@ -6,6 +6,6 @@
 #include <stdlib.h>
 #include "defines.h"
 
-#define DEBUG_MODE
+#define DEBUG_MODE_TOKEN
 
 #endif

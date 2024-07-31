@@ -35,9 +35,23 @@ typedef struct {
     const char* start;
     size_t length;
     size_t line;
+    char* literal;
 } Token;
 
-void init_lexer(const char* source);
+typedef struct {
+    // marks the beginning of the current lexeme (word) being scanned
+    const char* start;
+    // the current character being looked at
+    const char* current;
+    // the current line number we are scanning
+    size_t line;
+    Token* tokens;
+    size_t tokenCount;
+    size_t tokenCapacity;
+} Lexer;
+
+Lexer* init_lexer(const char* source);
+void de_init_lexer();
 Token scan_token();
 void tokenize();
 
