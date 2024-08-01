@@ -2,19 +2,67 @@
 #define pepper_parser_h
 
 #include "lexer.h"
-#include "ast.h"
+
+#define MAX_IDENT_LENGTH 128
+
+typedef enum {
+    EXPR_INFIX = 1,
+    EXPR_INT,
+} ExpressionType;
+
+enum StatementType {
+    STMT_ASSIGN = 1,
+    STMT_RETURN,
+};
+
+typedef enum {
+    OP_ADD = 1,
+} OperatorType;
 
 typedef struct {
     Token* tokens;
-    Token currentToken;
-    Token peekToken;
+    Token current_token;
+    Token peek_token;
     size_t current;
 } Parser;
 
+struct Expression;
+
+typedef struct {
+    struct Expression* left;
+    struct Expression* right;
+    OperatorType operator;
+} InfixExpression;
+
+typedef struct {
+    ExpressionType type;
+    Token token;
+    union {
+        int integer;
+        InfixExpression infix;
+    };
+} Expression;
+
+typedef struct {
+    char value[MAX_IDENT_LENGTH];
+    Token token;
+} Identifier;
+
+typedef struct {
+    enum StatementType type;
+    Token token;
+    Identifier name;
+    Expression *value;
+} Statement;
+
+typedef struct {
+    Statement* statements;
+    size_t statement_count;
+    size_t statement_capacity;
+} Program;
+
 Parser* init_parser(Token* tokens);
 void de_init_parser();
-void next_token();
-Program* parse_program();
-Binary* parse_binary();
+Program* parse_program(Parser* parser);
 
 #endif

@@ -1,15 +1,1 @@
-x := "pepper".
-y := 5.
-z := 7.
-
-answer := y + z.
-
-answer--.
-
-std::io.
-
-std := @import("std/io").
-
-struct true false if while 
-
-fn x 
+x := 5 + 2.

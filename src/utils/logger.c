@@ -11,24 +11,24 @@ void shutdown_logging() {
 }
 
 void log_output(LogLevel level, const char* message, ...) {
-    const char* levelStrings[6] =  {"[FATAL]: ", "[ERROR]: ", "[WARN]:  ", "[INFO]:  ", "[DEBUG]: ", "[TRACE]: "};
-    bool isError = level < LOG_LEVEL_WARN;
+    const char* level_strings[6] =  {"[FATAL]: ", "[ERROR]: ", "[WARN]:  ", "[INFO]:  ", "[DEBUG]: ", "[TRACE]: "};
+    bool is_error = level < LOG_LEVEL_WARN;
 
-    const i32 messageLength = 32000;
-    char outMessage[messageLength];
-    memset(outMessage, 0, sizeof(outMessage));
+    const i32 message_length = 32000;
+    char out_message[message_length];
+    memset(out_message, 0, sizeof(out_message));
 
-    __builtin_va_list argPtr;
-    va_start(argPtr, message);
-    vsnprintf(outMessage, messageLength, message, argPtr);
-    va_end(argPtr);
+    __builtin_va_list arg_ptr;
+    va_start(arg_ptr, message);
+    vsnprintf(out_message, message_length, message, arg_ptr);
+    va_end(arg_ptr);
 
-    char outMessage2[messageLength];
-    snprintf(outMessage2, messageLength, "%s%s\n", levelStrings[level], outMessage);
-    if (isError) {
-        fprintf(stderr, "%s\n", outMessage2);
+    char out_message_2[message_length];
+    snprintf(out_message_2, message_length, "%s%s\n", level_strings[level], out_message);
+    if (is_error) {
+        fprintf(stderr, "%s\n", out_message_2);
         exit(1);
     } else {
-        fprintf(stdout, "%s\n", outMessage2);
+        fprintf(stdout, "%s\n", out_message_2);
     }
 }

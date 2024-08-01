@@ -1,47 +1,51 @@
+#include <stdlib.h>
 #include <string.h>
 
 #include "lexer.h"
 #include "logger.h"
 #include "debug.h"
 
-// scanner variable
-Lexer lexer;
 
 // initialize the scanner with sensible defaults
 Lexer* init_lexer(const char* source) {
-    lexer.start = source;
-    lexer.current = source;
-    lexer.line = 1;
-    lexer.tokens = NULL;
-    lexer.tokenCapacity = 0;
-    lexer.tokenCount = 0;
-    return &lexer;
-}
-void de_init_lexer() {
-    for (size_t i = 0; i < lexer.tokenCount; i++) {
-        free(lexer.tokens[i].literal);
+    Lexer* lexer = malloc(sizeof(Lexer));
+    if (!lexer) {
+        ERROR("Run out of memory when initializing lexer");
+        exit(EXIT_FAILURE);
     }
-    free(lexer.tokens);
-    lexer.tokens = NULL;
-    lexer.tokenCount = 0;
-    lexer.tokenCapacity = 0;
+    lexer->start = source;
+    lexer->current = source;
+    lexer->line = 1;
+    lexer->tokens = NULL;
+    lexer->token_capacity = 0;
+    lexer->token_count = 0;
+    return lexer;
+}
+void de_init_lexer(Lexer* lexer) {
+    for (size_t i = 0; i < lexer->token_count; i++) {
+        free(lexer->tokens[i].literal);
+    }
+    free(lexer->tokens);
+    lexer->tokens = NULL;
+    lexer->token_count = 0;
+    lexer->token_capacity = 0;
 }
 
-void add_token(Token token) {
-    if (lexer.tokenCount == lexer.tokenCapacity) {
-        lexer.tokenCapacity = lexer.tokenCapacity == 0 ? 8 : lexer.tokenCapacity * 2;
-        lexer.tokens = realloc(lexer.tokens, lexer.tokenCapacity * sizeof(Token));
-        if (lexer.tokens == NULL) {
+static void add_token(Lexer* lexer, Token token) {
+    if (lexer->token_count == lexer->token_capacity) {
+        lexer->token_capacity = lexer->token_capacity == 0 ? 8 : lexer->token_capacity * 2;
+        lexer->tokens = realloc(lexer->tokens, lexer->token_capacity * sizeof(Token));
+        if (lexer->tokens == NULL) {
             ERROR("Failed to allocate memory for tokens.");
             exit(EXIT_FAILURE);
         }
     }
-    lexer.tokens[lexer.tokenCount] = token;
-    lexer.tokenCount++;
+    lexer->tokens[lexer->token_count] = token;
+    lexer->token_count++;
 }
 
-static bool is_at_end() {
-    return *lexer.current == '\0';
+static bool is_at_end(Lexer* lexer) {
+    return *lexer->current == '\0';
 }
 
 static char* literal(Token* token) {
@@ -57,66 +61,66 @@ static char* literal(Token* token) {
     return literal;
 }
 
-static Token create_token(TokenType type) {
+static Token create_token(Lexer* lexer, TokenType type) {
     Token token;
     token.type = type;
-    token.length = (size_t)(lexer.current - lexer.start);
-    token.line = lexer.line;
-    token.start = lexer.start;
+    token.length = (size_t)(lexer->current - lexer->start);
+    token.line = lexer->line;
+    token.start = lexer->start;
     token.literal = literal(&token);
-    add_token(token);
+    add_token(lexer, token);
     return token;
 }
 
-static Token error_token(const char* message) {
+static Token error_token(Lexer* lexer, const char* message) {
     Token token;
     token.type = TOKEN_ERROR;
     token.length = (size_t)strlen(message);
-    token.line = lexer.line;
+    token.line = lexer->line;
     token.start = message;
     token.literal = literal(&token);
-    add_token(token);
+    add_token(lexer, token);
     return token;
 }
 
-static char advance() {
-    lexer.current++;
-    return lexer.current[-1];
+static char advance(Lexer* lexer) {
+    lexer->current++;
+    return lexer->current[-1];
 }
 
-static bool match(char expected) {
-    if (is_at_end()) return false;
-    if (*lexer.current != expected) return false;
-    lexer.current++;
+static bool match(Lexer* lexer, char expected) {
+    if (is_at_end(lexer)) return false;
+    if (*lexer->current != expected) return false;
+    lexer->current++;
     return true;
 }
 
-static char peek() {
-    return *lexer.current;
+static char peek(Lexer* lexer) {
+    return *lexer->current;
 }
 
-static char peekNext() {
-    if (is_at_end()) return '\0';
-    return lexer.current[1];
+static char peekNext(Lexer* lexer) {
+    if (is_at_end(lexer)) return '\0';
+    return lexer->current[1];
 }
 
-void skip_whitespace() {
+void skip_whitespace(Lexer* lexer) {
     for (;;) {
         // peek the char
-        char c = peek();
+        char c = peek(lexer);
         switch (c) {
             case ' ':
             case '\r':
             case '\t':
-                advance();
+                advance(lexer);
                 break;
             case '\n':
-                lexer.line++;
-                advance();
+                lexer->line++;
+                advance(lexer);
                 break;
             case '/':
-                if (peekNext() == '/') {
-                    while (peek() != '\n' && !is_at_end()) advance();
+                if (peekNext(lexer) == '/') {
+                    while (peek(lexer) != '\n' && !is_at_end(lexer)) advance(lexer);
                 } else {
                     return;
                 }
@@ -138,131 +142,131 @@ static bool is_numeric(char c) {
     return (c >= '0' && c <= '9');
 }
 
-static TokenType check_for_keyword(size_t start, size_t length, const char* rest, TokenType type) {
-    if ((size_t)(lexer.current - lexer.start) == start + length
-        && memcmp(lexer.start + start, rest, length) == 0) {
+static TokenType check_for_keyword(Lexer* lexer, size_t start, size_t length, const char* rest, TokenType type) {
+    if ((size_t)(lexer->current - lexer->start) == start + length
+        && memcmp(lexer->start + start, rest, length) == 0) {
         return type;
     }
     return TOKEN_IDENTIFIER;
 }
 
-static TokenType identifier_type() {
-    switch (lexer.start[0]) {
-        case 'a': return check_for_keyword(1, 2, "nd", TOKEN_AND);
+static TokenType identifier_type(Lexer* lexer) {
+    switch (lexer->start[0]) {
+        case 'a': return check_for_keyword(lexer, 1, 2, "nd", TOKEN_AND);
         case 'e': {
-            if (lexer.current - lexer.start > 1) {
-                switch (lexer.start[1]) {
-                    case 'n': return check_for_keyword(2, 2, "um", TOKEN_ENUM);
-                    case 'l': return check_for_keyword(2, 2, "se", TOKEN_ELSE);
+            if (lexer->current - lexer->start > 1) {
+                switch (lexer->start[1]) {
+                    case 'n': return check_for_keyword(lexer, 2, 2, "um", TOKEN_ENUM);
+                    case 'l': return check_for_keyword(lexer, 2, 2, "se", TOKEN_ELSE);
                 }
             }
         }
         case 'f': {
-            if (lexer.current - lexer.start > 1) {
-                switch (lexer.start[1]) {
-                    case 'a': return check_for_keyword(2, 3, "lse", TOKEN_FALSE);
-                    case 'o': return check_for_keyword(2, 1, "r", TOKEN_FOR);
+            if (lexer->current - lexer->start > 1) {
+                switch (lexer->start[1]) {
+                    case 'a': return check_for_keyword(lexer, 2, 3, "lse", TOKEN_FALSE);
+                    case 'o': return check_for_keyword(lexer, 2, 1, "r", TOKEN_FOR);
                     case 'n': return TOKEN_FN;
                 }
             }
         }
-        case 'i': return check_for_keyword(1, 1, "f", TOKEN_IF);
+        case 'i': return check_for_keyword(lexer, 1, 1, "f", TOKEN_IF);
         case 'm': {
-            if (lexer.current - lexer.start > 1) {
-                switch (lexer.start[1]) {
-                    case 'u': check_for_keyword(2, 1, "t", TOKEN_MUT);
-                    case 'e': check_for_keyword(2, 4, "thod", TOKEN_METHOD);
+            if (lexer->current - lexer->start > 1) {
+                switch (lexer->start[1]) {
+                    case 'u': check_for_keyword(lexer, 2, 1, "t", TOKEN_MUT);
+                    case 'e': check_for_keyword(lexer, 2, 4, "thod", TOKEN_METHOD);
                 }
             }
         }
-        case 'n': return check_for_keyword(1, 2, "il", TOKEN_NIL);
-        case 'o': return check_for_keyword(1, 1, "r", TOKEN_OR);
-        case 'p': return check_for_keyword(1, 4, "rint", TOKEN_PRINT);
-        case 'r': return check_for_keyword(1, 5, "eturn", TOKEN_RETURN);
-        case 's': return check_for_keyword(1, 5, "truct", TOKEN_STRUCT);
-        case 't': return check_for_keyword(1, 3, "rue", TOKEN_TRUE);
-        case 'v': return check_for_keyword(1, 3, "oid", TOKEN_VOID);
-        case 'w': return check_for_keyword(1, 4, "hile", TOKEN_WHILE);
+        case 'n': return check_for_keyword(lexer, 1, 2, "il", TOKEN_NIL);
+        case 'o': return check_for_keyword(lexer, 1, 1, "r", TOKEN_OR);
+        case 'p': return check_for_keyword(lexer, 1, 4, "rint", TOKEN_PRINT);
+        case 'r': return check_for_keyword(lexer, 1, 5, "eturn", TOKEN_RETURN);
+        case 's': return check_for_keyword(lexer, 1, 5, "truct", TOKEN_STRUCT);
+        case 't': return check_for_keyword(lexer, 1, 3, "rue", TOKEN_TRUE);
+        case 'v': return check_for_keyword(lexer, 1, 3, "oid", TOKEN_VOID);
+        case 'w': return check_for_keyword(lexer, 1, 4, "hile", TOKEN_WHILE);
         default: return TOKEN_IDENTIFIER;
     }
 }
 
-static Token identifier() {
-    while (is_alpha(peek()) || is_numeric(peek())) advance();
-    return create_token(identifier_type());
+static Token identifier(Lexer* lexer) {
+    while (is_alpha(peek(lexer)) || is_numeric(peek(lexer))) advance(lexer);
+    return create_token(lexer, identifier_type(lexer));
 }
 
-static Token number() {
-    while (is_numeric(peek())) advance();
+static Token number(Lexer* lexer) {
+    while (is_numeric(peek(lexer))) advance(lexer);
 
-    if (peek() == '.' && is_numeric(peekNext())) {
-        advance();
-        while (is_numeric(peek())) advance();
+    if (peek(lexer) == '.' && is_numeric(peekNext(lexer))) {
+        advance(lexer);
+        while (is_numeric(peek(lexer))) advance(lexer);
     }
 
-    return create_token(TOKEN_NUMBER);
+    return create_token(lexer, TOKEN_NUMBER);
 }
 
-static Token string() {
-    while (peek() != '"' && !is_at_end()) {
-        if (peek() == '\n') lexer.line++;
-        advance();
+static Token string(Lexer* lexer) {
+    while (peek(lexer) != '"' && !is_at_end(lexer)) {
+        if (peek(lexer) == '\n') lexer->line++;
+        advance(lexer);
     }
-    if (is_at_end()) return error_token("Unterminated string");
+    if (is_at_end(lexer)) return error_token(lexer, "Unterminated string");
 
     // for the closing quote
-    advance();
-    return create_token(TOKEN_STRING);
+    advance(lexer);
+    return create_token(lexer, TOKEN_STRING);
 }
 
-Token scan_token() {
+Token scan_token(Lexer* lexer) {
     //skip any whitespace
-    skip_whitespace();
-    lexer.start = lexer.current;
+    skip_whitespace(lexer);
+    lexer->start = lexer->current;
 
-    if (is_at_end()) return create_token(TOKEN_EOF);
+    if (is_at_end(lexer)) return create_token(lexer, TOKEN_EOF);
 
-    char c = advance();
-    if (is_numeric(c)) return number();
-    if (is_alpha(c)) return identifier();
+    char c = advance(lexer);
+    if (is_numeric(c)) return number(lexer);
+    if (is_alpha(c)) return identifier(lexer);
     switch (c) {
-        case '{': return create_token(TOKEN_LEFT_BRACE);
-        case '}': return create_token(TOKEN_RIGHT_BRACE);
-        case '(': return create_token(TOKEN_LEFT_PAREN);
-        case ')': return create_token(TOKEN_RIGHT_PAREN);
-        case '.': return create_token(TOKEN_DOT);
-        case ',': return create_token(TOKEN_COMMA);
-        case '-': return create_token(match('-') ? TOKEN_DECREMENT : TOKEN_MINUS);
-        case '+': return create_token(match('+') ? TOKEN_INCREMENT : TOKEN_PLUS);
-        case '/': return create_token(TOKEN_SLASH);
-        case '*': return create_token(TOKEN_STAR);
-        case '?': return create_token(TOKEN_QUESTION_MARK);
-        case '@': return create_token(TOKEN_AT);
+        case '{': return create_token(lexer, TOKEN_LEFT_BRACE);
+        case '}': return create_token(lexer, TOKEN_RIGHT_BRACE);
+        case '(': return create_token(lexer, TOKEN_LEFT_PAREN);
+        case ')': return create_token(lexer, TOKEN_RIGHT_PAREN);
+        case '.': return create_token(lexer, TOKEN_DOT);
+        case ',': return create_token(lexer, TOKEN_COMMA);
+        case '-': return create_token(lexer, match(lexer, '-') ? TOKEN_DECREMENT : TOKEN_MINUS);
+        case '+': return create_token(lexer, match(lexer, '+') ? TOKEN_INCREMENT : TOKEN_PLUS);
+        case '/': return create_token(lexer, TOKEN_SLASH);
+        case '*': return create_token(lexer, TOKEN_STAR);
+        case '?': return create_token(lexer, TOKEN_QUESTION_MARK);
+        case '@': return create_token(lexer, TOKEN_AT);
         case ':': {
-            if (match('=')) {
-                return create_token(TOKEN_ASSIGN);
-            } else if (match(':')) {
-                return create_token(TOKEN_COLON_COLON);
+            if (match(lexer, '=')) {
+                return create_token(lexer, TOKEN_ASSIGN);
+            } else if (match(lexer, ':')) {
+                return create_token(lexer, TOKEN_COLON_COLON);
             } else {
-                return create_token(TOKEN_COLON);
+                return create_token(lexer, TOKEN_COLON);
             }
         }
-        case ';': return create_token(TOKEN_SEMICOLON);
-        case '=': return create_token(match('=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL);
-        case '"': return string();
-        case '!': return create_token(match('=') ? TOKEN_BANG_EQUAL : TOKEN_BANG);
-        case '\0': return create_token(TOKEN_EOF);
+        case ';': return create_token(lexer, TOKEN_SEMICOLON);
+        case '=': return create_token(lexer, match(lexer, '=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL);
+        case '"': return string(lexer);
+        case '!': return create_token(lexer, match(lexer, '=') ? TOKEN_BANG_EQUAL : TOKEN_BANG);
+        case '\0': return create_token(lexer, TOKEN_EOF);
     }
-    return error_token("Unidentified token");
+    return error_token(lexer, "Unidentified token");
 }
 
-void tokenize() {
-    Token token = scan_token();
+void tokenize(Lexer* lexer) {
+    Token token = scan_token(lexer);
     do {
 #ifdef DEBUG_MODE_TOKEN
         debug_token(&token);
 #endif
-        token = scan_token();
+        token = scan_token(lexer);
     } while (token.type != TOKEN_EOF);
 #ifdef DEBUG_MODE_TOKEN
     debug_token(&token);

@@ -1,5 +1,3 @@
-#include "common.h"
-#include "logger.h"
 #include "lexer.h"
 #include "parser.h"
 
@@ -11,10 +9,12 @@ static void repl() {
             printf("\n");
             break;
         }
-        init_lexer(line);
-        tokenize();
+        Lexer* lexer = init_lexer(line);
+        tokenize(lexer);
+        Parser* parser = init_parser(lexer->tokens);
+        parse_program(parser);
+        de_init_lexer(lexer);
     }
-    de_init_lexer();
 }
 
 static char* read_file(const char* path) {
@@ -25,20 +25,20 @@ static char* read_file(const char* path) {
     }
 
     fseek(file, 0L, SEEK_END);
-    size_t fileSize = (size_t)ftell(file);
+    size_t file_size = (size_t)ftell(file);
     rewind(file);
 
-    char* buffer = (char*)malloc(fileSize + 1);
+    char* buffer = (char*)malloc(file_size + 1);
     if (buffer == NULL) {
         fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
         exit(74);
     }
-    size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
-    if (bytesRead < fileSize) {
+    size_t bytes_read = fread(buffer, sizeof(char), file_size, file);
+    if (bytes_read < file_size) {
         fprintf(stderr, "Could not read file \"%s\".\n", path);
         exit(74);
     }
-    buffer[bytesRead] = '\0';
+    buffer[bytes_read] = '\0';
 
     fclose(file);
     return buffer;
@@ -48,11 +48,10 @@ static char* read_file(const char* path) {
 static void run_file(const char* path) {
     char* source = read_file(path);
     Lexer* lexer = init_lexer(source);
-    tokenize();
-    init_parser(lexer->tokens);
-    Binary* bin = parse_binary();
-    //de_init_parser();
-    de_init_lexer();
+    tokenize(lexer);
+    Parser* parser = init_parser(lexer->tokens);
+    parse_program(parser);
+    de_init_lexer(lexer);
     free(source);
     // exit codes differ for each error
     //if (result == INTERPRET_COMPILE_ERROR) exit(65);

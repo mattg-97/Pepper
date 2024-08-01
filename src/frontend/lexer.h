@@ -46,13 +46,13 @@ typedef struct {
     // the current line number we are scanning
     size_t line;
     Token* tokens;
-    size_t tokenCount;
-    size_t tokenCapacity;
+    size_t token_count;
+    size_t token_capacity;
 } Lexer;
 
 Lexer* init_lexer(const char* source);
-void de_init_lexer();
-Token scan_token();
-void tokenize();
+void de_init_lexer(Lexer* lexer);
+Token scan_token(Lexer* lexer);
+void tokenize(Lexer* lexer);
 
 #endif
