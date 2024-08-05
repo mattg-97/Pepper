@@ -64,6 +64,7 @@ const char* print_token_type(TokenType type) {
     return "TOKEN_UNKNOWN";
 }
 
+
 void debug_token(Token* token) {
     const char* type = print_token_type(token->type);
     INFO("Token: |%s|  Type: |%s|", token->literal, type);
@@ -71,6 +72,9 @@ void debug_token(Token* token) {
 
 void debug_expression(Expression* expression) {
     switch (expression->type) {
+        case EXPR_INT:
+            printf("%s", expression->token.literal);
+            break;
         default: {
             printf("YEEET");
             break;
@@ -81,8 +85,13 @@ void debug_expression(Expression* expression) {
 void debug_statement(Statement* statement) {
     switch (statement->type) {
         case STMT_ASSIGN: {
-            printf("ASSIGNMENT\n");
-            printf("%s := %s.\n", statement->name.value, statement->value->token.literal);
+            printf("Statement {\n\t");
+            printf("%s", statement->token.literal);
+            printf(" := ");
+            debug_expression(statement->value);
+            printf(".");
+            printf("\n");
+            printf("}");
             break;
         }
         case STMT_RETURN: {
@@ -94,5 +103,11 @@ void debug_statement(Statement* statement) {
             printf("UNKNOWN\n");
             break;
         }
+    }
+}
+
+void debug_program(Program* program) {
+    for (u64 i = 0; i < program->statement_count; i++) {
+        debug_statement(&program->statements[i]);
     }
 }

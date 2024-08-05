@@ -102,6 +102,11 @@ static void parse_assignment_statement(Parser* parser, Statement* statement) {
     Identifier ident = {.token = parser->current_token};
     strcpy(ident.value, parser->current_token.literal);
     statement->name = ident;
+    Expression* expression = (Expression*)malloc(sizeof(Expression));
+    expression->type = EXPR_INT;
+    expression->token = parser->peek_token;
+    statement->value = expression;
+    statement->value->token = parser->peek_token;
 
     while (!current_token_is(parser, TOKEN_DOT)) {
         next_token(parser);
