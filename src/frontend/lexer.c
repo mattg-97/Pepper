@@ -2,13 +2,14 @@
 #include <string.h>
 
 #include "lexer.h"
+#include "memory.h"
 #include "logger.h"
 #include "debug.h"
 
 
 // initialize the scanner with sensible defaults
 Lexer* init_lexer(const char* source) {
-    Lexer* lexer = malloc(sizeof(Lexer));
+    Lexer* lexer = allocate_memory(sizeof(Lexer), true);
     if (!lexer) {
         ERROR("Run out of memory when initializing lexer");
         exit(EXIT_FAILURE);
@@ -22,10 +23,10 @@ Lexer* init_lexer(const char* source) {
     return lexer;
 }
 void de_init_lexer(Lexer* lexer) {
-    for (size_t i = 0; i < lexer->token_count; i++) {
-        free(lexer->tokens[i].literal);
+    for (u64 i = 0; i < lexer->token_count; i++) {
+        free_memory(lexer->tokens[i].literal, true);
     }
-    free(lexer->tokens);
+    free_memory(lexer->tokens, true);
     lexer->tokens = NULL;
     lexer->token_count = 0;
     lexer->token_capacity = 0;
@@ -49,12 +50,12 @@ static bool is_at_end(Lexer* lexer) {
 }
 
 static char* literal(Token* token) {
-    char* literal = (char*)malloc(token->length + 1);
+    char* literal = (char*)allocate_memory(token->length + 1, true);
     if (literal == NULL) {
         ERROR("Unable to allocate memory for token literal.");
         exit(EXIT_FAILURE);
     }
-    for (size_t i = 0; i < token->length; i++) {
+    for (u64 i = 0; i < token->length; i++) {
         literal[i] = token->start[i];
     }
     literal[token->length] = '\0';
@@ -64,7 +65,7 @@ static char* literal(Token* token) {
 static Token create_token(Lexer* lexer, TokenType type) {
     Token token;
     token.type = type;
-    token.length = (size_t)(lexer->current - lexer->start);
+    token.length = (u64)(lexer->current - lexer->start);
     token.line = lexer->line;
     token.start = lexer->start;
     token.literal = literal(&token);
@@ -75,7 +76,7 @@ static Token create_token(Lexer* lexer, TokenType type) {
 static Token error_token(Lexer* lexer, const char* message) {
     Token token;
     token.type = TOKEN_ERROR;
-    token.length = (size_t)strlen(message);
+    token.length = (u64)strlen(message);
     token.line = lexer->line;
     token.start = message;
     token.literal = literal(&token);
@@ -142,8 +143,8 @@ static bool is_numeric(char c) {
     return (c >= '0' && c <= '9');
 }
 
-static TokenType check_for_keyword(Lexer* lexer, size_t start, size_t length, const char* rest, TokenType type) {
-    if ((size_t)(lexer->current - lexer->start) == start + length
+static TokenType check_for_keyword(Lexer* lexer, u64 start, u64 length, const char* rest, TokenType type) {
+    if ((u64)(lexer->current - lexer->start) == start + length
         && memcmp(lexer->start + start, rest, length) == 0) {
         return type;
     }

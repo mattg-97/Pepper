@@ -23,7 +23,7 @@ typedef struct {
     Token* tokens;
     Token current_token;
     Token peek_token;
-    size_t current;
+    u64 current;
 } Parser;
 
 struct Expression;
@@ -57,8 +57,8 @@ typedef struct {
 
 typedef struct {
     Statement* statements;
-    size_t statement_count;
-    size_t statement_capacity;
+    u64 statement_count;
+    u64 statement_capacity;
 } Program;
 
 Parser* init_parser(Token* tokens);

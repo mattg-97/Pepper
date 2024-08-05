@@ -33,8 +33,8 @@ typedef enum {
 typedef struct {
     TokenType type;
     const char* start;
-    size_t length;
-    size_t line;
+    u64 length;
+    u64 line;
     char* literal;
 } Token;
 
@@ -44,10 +44,10 @@ typedef struct {
     // the current character being looked at
     const char* current;
     // the current line number we are scanning
-    size_t line;
+    u64 line;
     Token* tokens;
-    size_t token_count;
-    size_t token_capacity;
+    u64 token_count;
+    u64 token_capacity;
 } Lexer;
 
 Lexer* init_lexer(const char* source);

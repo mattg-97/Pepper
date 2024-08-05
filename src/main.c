@@ -25,7 +25,7 @@ static char* read_file(const char* path) {
     }
 
     fseek(file, 0L, SEEK_END);
-    size_t file_size = (size_t)ftell(file);
+    u64 file_size = (u64)ftell(file);
     rewind(file);
 
     char* buffer = (char*)malloc(file_size + 1);
@@ -33,7 +33,7 @@ static char* read_file(const char* path) {
         fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
         exit(74);
     }
-    size_t bytes_read = fread(buffer, sizeof(char), file_size, file);
+    u64 bytes_read = fread(buffer, sizeof(char), file_size, file);
     if (bytes_read < file_size) {
         fprintf(stderr, "Could not read file \"%s\".\n", path);
         exit(74);
