@@ -1,5 +1,6 @@
 #include "debug.h"
 #include "logger.h"
+#include "parser.h"
 
 const char* print_token_type(TokenType type) {
     switch (type) {
@@ -68,14 +69,29 @@ void debug_token(Token* token) {
     INFO("Token: |%s|  Type: |%s|", token->literal, type);
 }
 
+void debug_expression(Expression* expression) {
+    switch (expression->type) {
+        default: {
+            printf("YEEET");
+            break;
+        }
+    }
+}
+
 void debug_statement(Statement* statement) {
     switch (statement->type) {
         case STMT_ASSIGN: {
             printf("ASSIGNMENT\n");
+            printf("%s := %s.\n", statement->name.value, statement->value->token.literal);
             break;
         }
         case STMT_RETURN: {
             printf("RETURN\n");
+            printf("return statement.\n");
+            break;
+        }
+        default: {
+            printf("UNKNOWN\n");
             break;
         }
     }

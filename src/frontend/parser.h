@@ -6,6 +6,16 @@
 #define MAX_IDENT_LENGTH 128
 
 typedef enum {
+    LOWEST = 0,
+    EQUALS,
+    LESSGREATER,
+    SUM,
+    PRODUCT,
+    PREFIX,
+    CALL
+} Precedence;
+
+typedef enum {
     EXPR_INFIX = 1,
     EXPR_INT,
 } ExpressionType;
@@ -13,6 +23,7 @@ typedef enum {
 enum StatementType {
     STMT_ASSIGN = 1,
     STMT_RETURN,
+    STMT_EXPRESSION,
 };
 
 typedef enum {
@@ -61,13 +72,26 @@ typedef struct {
 } ReturnStatement;
 
 typedef struct {
+    Token token;
+    union {
+        i64 integer;
+        f64 floating_point;
+    };
+} NumberLiteral;
+
+typedef struct {
+    Token token;
+    Expression expression;
+} ExpressionStatement;
+
+typedef struct {
     Statement* statements;
     u64 statement_count;
     u64 statement_capacity;
 } Program;
 
 Parser* init_parser(Token* tokens);
-void de_init_parser();
+void de_init_parser(Parser* parser);
 Program* parse_program(Parser* parser);
 
 #endif

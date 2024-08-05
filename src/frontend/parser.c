@@ -4,9 +4,10 @@
 
 #include "parser.h"
 #include "lexer.h"
-#include "memory.h"
 #include "logger.h"
 #include "debug.h"
+
+static void parse_expression(Parser* parser);
 
 /*static void print_help(Parser* parser) {
     printf("Current token: \n");
@@ -17,7 +18,7 @@
 
 static void next_token(Parser* parser) {
     parser->current_token = parser->peek_token;
-    if (parser->tokens[parser->current].type != TOKEN_EOF) {
+    if (parser->peek_token.type != TOKEN_EOF) {
         parser->peek_token = parser->tokens[parser->current];
     }
     parser->current++;
@@ -36,11 +37,15 @@ Parser* init_parser(Token* tokens) {
     return parser;
 }
 
+void de_init_parser(Parser* parser) {
+    parser->current = 0;
+    free(parser->tokens);
+}
 
 static void peek_error(Parser* parser, TokenType type)  {
     const char* expected = print_token_type(type);
     const char* actual = print_token_type(parser->peek_token.type);
-    ERROR("Expected next token to be %s but got %s instead", expected, actual);
+    ERROR("Line: [ %d ] -> Expected next token to be %s but got %s instead", parser->current_token.line, expected, actual);
     exit(EXIT_FAILURE);
 }
 
@@ -53,6 +58,7 @@ static void add_statement(Program* program, Statement* statement) {
             exit(EXIT_FAILURE);
         }
     }
+    debug_statement(statement);
     program->statements[program->statement_count] = *statement;
     program->statement_count++;
 }
@@ -86,53 +92,85 @@ static bool expect_peek(Parser* parser, TokenType type) {
     return expr;
 }*/
 
-static int parse_assignment_statement(Parser* parser, Statement* statement) {
+static void parse_assignment_statement(Parser* parser, Statement* statement) {
     statement->type = STMT_ASSIGN;
     statement->token = parser->current_token;
 
     if (!expect_peek(parser, TOKEN_ASSIGN)) {
-        return -1;
+        return;
     }
-    Identifier ident;
-    ident.token = parser->current_token;
-    memcpy(&ident.value, &parser->current_token.literal, parser->current_token.length);
+    Identifier ident = {.token = parser->current_token};
+    strcpy(ident.value, parser->current_token.literal);
     statement->name = ident;
 
     while (!current_token_is(parser, TOKEN_DOT)) {
         next_token(parser);
     }
-    return 1;
 }
 
-static int parse_return_statement(Parser* parser, Statement* statement) {
+static void parse_return_statement(Parser* parser, Statement* statement) {
     statement->type = STMT_RETURN;
+    statement->token = parser->current_token;
     next_token(parser);
     while (!current_token_is(parser, TOKEN_DOT)) {
         next_token(parser);
     }
-    return 1;
 }
 
-static int parse_statement(Parser* parser, Statement* statement) {
+static void parse_number_literal(Parser* parser, NumberLiteral* lit) {
+    printf("Parsing intlit: token -> %s\n", parser->current_token.literal);
+    lit->token = parser->current_token;
+    for (u64 i = 0; i < parser->current_token.length; i++) {
+        if (parser->current_token.literal[i] == '.') {
+            char* eptr;
+            lit->floating_point = (f64)strtod(parser->current_token.literal, &eptr);
+            return;
+        }
+    }
+    lit->integer = (i64)atoi(parser->current_token.literal);
+}
+
+static void parse_expression(Parser* parser) {
+    printf("%s\n", parser->peek_token.literal);
+    switch (parser->peek_token.type) {
+        case TOKEN_NUMBER: {
+            NumberLiteral* literal = (NumberLiteral*)malloc(sizeof(NumberLiteral));
+            parse_number_literal(parser, literal);
+        }
+        default: {
+            printf("CANT PARSE EXPR\n");
+        }
+    }
+}
+
+static void parse_expression_statement(Parser* parser, Statement* statement) {
+    statement->type = STMT_EXPRESSION;
+    statement->token = parser->current_token;
+    parse_expression(parser);
+    if (!peek_token_is(parser, TOKEN_DOT)) {
+        next_token(parser);
+    }
+}
+
+static Statement* parse_statement(Parser* parser) {
+    Statement* stmt = (Statement*)malloc(sizeof(Statement));
     switch (parser->current_token.type) {
         case TOKEN_IDENTIFIER: {
             if (parser->peek_token.type == TOKEN_ASSIGN) {
-                return parse_assignment_statement(parser, statement);
-            } else {
-                return -1;
+                parse_assignment_statement(parser, stmt);
             }
             break;
         }
         case TOKEN_RETURN: {
-            return parse_return_statement(parser, statement);
+            parse_return_statement(parser, stmt);
             break;
         }
         default: {
-            return -1;
+            parse_expression_statement(parser, stmt);
             break;
         }
     }
-    return -1;
+    return stmt;
 }
 
 static Program* init_program() {
@@ -153,14 +191,14 @@ Program* parse_program(Parser* parser) {
     #ifdef DEBUG_MODE_PARSER
     #endif
      while (parser->current_token.type != TOKEN_EOF) {
-         Statement stmt;
-         if (parse_statement(parser, &stmt) != -1) {
-            add_statement(program, &stmt);
+         Statement* stmt = parse_statement(parser);
+         if (stmt != NULL) {
+            add_statement(program, stmt);
          };
          next_token(parser);
      }
-     for (u64 i = 0; i < program->statement_count; i++) {
+     /*for (u64 i = 0; i < program->statement_count; i++) {
         debug_statement(&program->statements[i]);
-     }
+     }*/
     return program;
 }
