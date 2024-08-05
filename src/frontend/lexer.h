@@ -3,6 +3,8 @@
 
 #include "common.h"
 
+#define MAX_TOKEN_LENGTH 128
+
 typedef enum {
   // Single-character tokens.
   TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN,
@@ -35,7 +37,7 @@ typedef struct {
     const char* start;
     u64 length;
     u64 line;
-    char* literal;
+    char literal[MAX_TOKEN_LENGTH];
 } Token;
 
 typedef struct {

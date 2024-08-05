@@ -2,14 +2,13 @@
 #include <string.h>
 
 #include "lexer.h"
-#include "memory.h"
 #include "logger.h"
 #include "debug.h"
 
 
 // initialize the scanner with sensible defaults
 Lexer* init_lexer(const char* source) {
-    Lexer* lexer = allocate_memory(sizeof(Lexer), true);
+    Lexer* lexer = (Lexer*)malloc(sizeof(Lexer));
     if (!lexer) {
         ERROR("Run out of memory when initializing lexer");
         exit(EXIT_FAILURE);
@@ -17,16 +16,13 @@ Lexer* init_lexer(const char* source) {
     lexer->start = source;
     lexer->current = source;
     lexer->line = 1;
-    lexer->tokens = NULL;
+    lexer->tokens = (Token*)malloc(sizeof(Token));
     lexer->token_capacity = 0;
     lexer->token_count = 0;
     return lexer;
 }
 void de_init_lexer(Lexer* lexer) {
-    for (u64 i = 0; i < lexer->token_count; i++) {
-        free_memory(lexer->tokens[i].literal, true);
-    }
-    free_memory(lexer->tokens, true);
+    free(lexer->tokens);
     lexer->tokens = NULL;
     lexer->token_count = 0;
     lexer->token_capacity = 0;
@@ -49,17 +45,15 @@ static bool is_at_end(Lexer* lexer) {
     return *lexer->current == '\0';
 }
 
-static char* literal(Token* token) {
-    char* literal = (char*)allocate_memory(token->length + 1, true);
-    if (literal == NULL) {
-        ERROR("Unable to allocate memory for token literal.");
+static void literal(Token* token) {
+    if (token->length > MAX_TOKEN_LENGTH) {
+        ERROR("Token length %d exceeds max lenght of %d", token->length, MAX_TOKEN_LENGTH);
         exit(EXIT_FAILURE);
     }
     for (u64 i = 0; i < token->length; i++) {
-        literal[i] = token->start[i];
+        token->literal[i] = token->start[i];
     }
-    literal[token->length] = '\0';
-    return literal;
+    token->literal[token->length] = '\0';
 }
 
 static Token create_token(Lexer* lexer, TokenType type) {
@@ -68,7 +62,7 @@ static Token create_token(Lexer* lexer, TokenType type) {
     token.length = (u64)(lexer->current - lexer->start);
     token.line = lexer->line;
     token.start = lexer->start;
-    token.literal = literal(&token);
+    literal(&token);
     add_token(lexer, token);
     return token;
 }
@@ -79,7 +73,7 @@ static Token error_token(Lexer* lexer, const char* message) {
     token.length = (u64)strlen(message);
     token.line = lexer->line;
     token.start = message;
-    token.literal = literal(&token);
+    literal(&token);
     add_token(lexer, token);
     return token;
 }

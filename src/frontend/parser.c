@@ -1,9 +1,12 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
 #include "parser.h"
 #include "lexer.h"
+#include "memory.h"
 #include "logger.h"
 #include "debug.h"
-#include <stdio.h>
-#include <stdlib.h>
 
 /*static void print_help(Parser* parser) {
     printf("Current token: \n");
@@ -14,7 +17,9 @@
 
 static void next_token(Parser* parser) {
     parser->current_token = parser->peek_token;
-    parser->peek_token = parser->tokens[parser->current];
+    if (parser->tokens[parser->current].type != TOKEN_EOF) {
+        parser->peek_token = parser->tokens[parser->current];
+    }
     parser->current++;
 }
 
@@ -31,21 +36,15 @@ Parser* init_parser(Token* tokens) {
     return parser;
 }
 
-static void print_assignment_statement(Statement* statement) {
-    printf("YEET\n");
-    printf("%s := %s", statement->token.literal, statement->name.value);
+
+static void peek_error(Parser* parser, TokenType type)  {
+    const char* expected = print_token_type(type);
+    const char* actual = print_token_type(parser->peek_token.type);
+    ERROR("Expected next token to be %s but got %s instead", expected, actual);
+    exit(EXIT_FAILURE);
 }
 
-static void print_statement(Statement* statement) {
-    switch (statement->type) {
-        case STMT_ASSIGN: {
-            print_assignment_statement(statement);
-        }
-        default: printf("CANT PRINT STATEMENT\n");
-    }
-}
-
-static void add_statement(Program* program, Statement statement) {
+static void add_statement(Program* program, Statement* statement) {
     if (program->statement_count == program->statement_capacity) {
         program->statement_capacity = program->statement_capacity == 0 ? 8 : program->statement_capacity * 2;
         program->statements = realloc(program->statements, program->statement_capacity * sizeof(Statement));
@@ -54,29 +53,29 @@ static void add_statement(Program* program, Statement statement) {
             exit(EXIT_FAILURE);
         }
     }
-    program->statements[program->statement_count] = statement;
-    print_statement(&statement);
+    program->statements[program->statement_count] = *statement;
     program->statement_count++;
 }
 
-/*static bool current_token_is(Parser* parser, TokenType type) {
+static bool current_token_is(Parser* parser, TokenType type) {
     return parser->current_token.type == type;
-    }*/
+}
 
 static bool peek_token_is(Parser* parser, TokenType type) {
     return parser->peek_token.type == type;
 }
 
-/*static bool expect_peek(Parser* parser, TokenType type) {
+static bool expect_peek(Parser* parser, TokenType type) {
     if (peek_token_is(parser, type)) {
         next_token(parser);
         return true;
     } else {
+        peek_error(parser, type);
         return false;
     }
-    }*/
+}
 
-static Expression* make_expression(ExpressionType type, Token token) {
+/*static Expression* make_expression(ExpressionType type, Token token) {
     Expression* expr = malloc(sizeof(Expression));
     if (!expr) {
         ERROR("Out of memory");
@@ -85,131 +84,83 @@ static Expression* make_expression(ExpressionType type, Token token) {
     expr->type = type;
     expr->token = token;
     return expr;
-}
-
-static Expression* parse_int_expression(Parser* parser) {
-    //printf("Parsing int: \n");
-    //print_help(parser);
-    Expression* expr = make_expression(EXPR_INT, parser->current_token);
-    expr->integer = 0;
-    char *s = expr->token.literal;
-    expr->integer = atoi(s);
-    return expr;
-}
-
-static Expression* parse_expression(Parser* parser);
-
-static Expression* parse_infix_expression(Parser* parser, Expression* left) {
-    //printf("Parsing infix: \n");
-    //print_help(parser);
-    Expression* expr = make_expression(EXPR_INFIX, parser->current_token);
-    expr->infix.left = (struct Expression *)left;
-    expr->infix.operator = OP_ADD;
-    next_token(parser);
-    expr->infix.right = (struct Expression *)parse_expression(parser);
-    return expr;
-}
-
-static Expression* parse_expression(Parser* parser) {
-    //printf("Parsing expression: \n");
-    //print_help(parser);
-    Expression* left;
-    switch (parser->current_token.type) {
-        case TOKEN_NUMBER: {
-            left = parse_int_expression(parser);
-            break;
-        }
-        default: {
-            //debug_token(&parser->peek_token);
-            ERROR("FAILURE TO parse expression");
-            break;
-        }
-    }
-    while (!peek_token_is(parser, TOKEN_DOT)) {
-        TokenType type = parser->peek_token.type;
-        switch (type) {
-            case TOKEN_PLUS: {
-                next_token(parser);
-                //printf("Parsing expression after next token call: \n");
-                //print_help(parser);
-                left = parse_infix_expression(parser, left);
-                break;
-            }
-            default: {
-                return left;
-                break;
-            }
-        }
-    }
-    return left;
-}
+}*/
 
 static int parse_assignment_statement(Parser* parser, Statement* statement) {
-    //printf("Parsing assignment: \n");
-    //print_help(parser);
     statement->type = STMT_ASSIGN;
     statement->token = parser->current_token;
+
+    if (!expect_peek(parser, TOKEN_ASSIGN)) {
+        return -1;
+    }
+    Identifier ident;
+    ident.token = parser->current_token;
+    memcpy(&ident.value, &parser->current_token.literal, parser->current_token.length);
+    statement->name = ident;
+
+    while (!current_token_is(parser, TOKEN_DOT)) {
+        next_token(parser);
+    }
+    return 1;
+}
+
+static int parse_return_statement(Parser* parser, Statement* statement) {
+    statement->type = STMT_RETURN;
     next_token(parser);
-    //printf("Parsing assignment after next token call: \n");
-    //print_help(parser);
-    statement->value = parse_expression(parser);
+    while (!current_token_is(parser, TOKEN_DOT)) {
+        next_token(parser);
+    }
     return 1;
 }
 
 static int parse_statement(Parser* parser, Statement* statement) {
-    //printf("Parsing statement: \n");
-    //print_help(parser);
     switch (parser->current_token.type) {
         case TOKEN_IDENTIFIER: {
             if (parser->peek_token.type == TOKEN_ASSIGN) {
-                next_token(parser);
-                //printf("Parsing statement after next token call: \n");
-                //print_help(parser);
                 return parse_assignment_statement(parser, statement);
+            } else {
+                return -1;
             }
             break;
         }
+        case TOKEN_RETURN: {
+            return parse_return_statement(parser, statement);
+            break;
+        }
         default: {
-            return 0;
+            return -1;
             break;
         }
     }
-    INFO("%s", statement->name);
-    return 0;
+    return -1;
 }
 
-static void print_program(Program* program) {
-    for (u64 i = 0; i < program->statement_count; i++) {
-        printf("%s\n", program->statements[i].name.value);
-    }
-}
-
-Program* parse_program(Parser* parser) {
-    //printf("Parsing program: \n");
-    //print_help(parser);
-    const int capacity = 4;
-    Program* program = (Program*)malloc((sizeof(Program) + capacity) * sizeof *program->statements);
+static Program* init_program() {
+    Program* program = (Program*)malloc(sizeof(Program));
     if (!program) {
         ERROR("Out of memory, unable to parse program.");
         exit(EXIT_FAILURE);
     }
+    program->statement_count = 0;
+    program->statement_capacity = 0;
+    program->statements = (Statement*)malloc(sizeof(Statement));
+    return program;
+}
+
+Program* parse_program(Parser* parser) {
+    Program* program = init_program();
 
     #ifdef DEBUG_MODE_PARSER
     #endif
-     program->statement_count = 0;
-     program->statement_capacity = 0;
-     program->statements = (Statement*)malloc(sizeof(Statement));
-
      while (parser->current_token.type != TOKEN_EOF) {
          Statement stmt;
-         if (parse_statement(parser, &stmt) == -1) {
-            printf("Adding statement\n");
-            add_statement(program, stmt);
-            continue;
-         }
-         //program->statements[program->statement_count++] = stmt;
+         if (parse_statement(parser, &stmt) != -1) {
+            add_statement(program, &stmt);
+         };
          next_token(parser);
      }
-     print_program(program);
+     for (u64 i = 0; i < program->statement_count; i++) {
+        debug_statement(&program->statements[i]);
+     }
     return program;
 }

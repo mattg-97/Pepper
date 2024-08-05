@@ -1,7 +1,7 @@
 #include "debug.h"
 #include "logger.h"
 
-static const char* print_token_type(TokenType type) {
+const char* print_token_type(TokenType type) {
     switch (type) {
         // Single character tokens.
         case TOKEN_LEFT_BRACE: return "TOKEN_LEFT_BRACE";
@@ -66,4 +66,17 @@ static const char* print_token_type(TokenType type) {
 void debug_token(Token* token) {
     const char* type = print_token_type(token->type);
     INFO("Token: |%s|  Type: |%s|", token->literal, type);
+}
+
+void debug_statement(Statement* statement) {
+    switch (statement->type) {
+        case STMT_ASSIGN: {
+            printf("ASSIGNMENT\n");
+            break;
+        }
+        case STMT_RETURN: {
+            printf("RETURN\n");
+            break;
+        }
+    }
 }

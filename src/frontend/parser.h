@@ -56,6 +56,11 @@ typedef struct {
 } Statement;
 
 typedef struct {
+    Token token;
+    Expression return_value;
+} ReturnStatement;
+
+typedef struct {
     Statement* statements;
     u64 statement_count;
     u64 statement_capacity;

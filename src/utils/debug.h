@@ -9,5 +9,6 @@ void debug_token(Token* token);
 void debug_statement(Statement* statement);
 void debug_expression(Expression* expression);
 void debug_program(Program* program);
+const char* print_token_type(TokenType type);
 
 #endif
