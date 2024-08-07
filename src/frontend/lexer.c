@@ -244,6 +244,9 @@ Token scan_token(Lexer* lexer) {
 }
 
 void tokenize(Lexer* lexer) {
+    #ifdef DEBUG_MODE_TOKEN
+    printf("--- TOKENS ---\n");
+    #endif
     Token token = scan_token(lexer);
     do {
 #ifdef DEBUG_MODE_TOKEN
@@ -253,5 +256,6 @@ void tokenize(Lexer* lexer) {
     } while (token.type != TOKEN_EOF);
 #ifdef DEBUG_MODE_TOKEN
     debug_token(&token);
+    printf("--- TOKENS ---\n\n");
 #endif
 }

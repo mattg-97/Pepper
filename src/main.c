@@ -1,5 +1,7 @@
 #include "lexer.h"
 #include "parser.h"
+#include "interpreter.h"
+#include "vm.h"
 
 static void repl() {
     char line[1024];
@@ -50,7 +52,10 @@ static void run_file(const char* path) {
     Lexer* lexer = init_lexer(source);
     tokenize(lexer);
     Parser* parser = init_parser(lexer);
-    parse_program(parser);
+    Program* program = parse_program(parser);
+    Chunk* chunk = interpret_program(program);
+    VM* vm = init_vm(chunk);
+    run(vm);
     de_init_lexer(lexer);
     free(source);
     // exit codes differ for each error

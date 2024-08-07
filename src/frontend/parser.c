@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "parser.h"
-#include "lexer.h"
+#include "memory.h"
 #include "logger.h"
 #include "debug.h"
 
@@ -11,7 +11,7 @@ static Expression* parse_expression(Parser* parser, Precedence precedence);
 
 static OperatorType get_operator(TokenType type) {
     switch (type) {
-        case TOKEN_PLUS: return OP_ADD;
+        case TOKEN_PLUS: return PARSE_OP_ADD;
         default: return OP_UNKNOWN;
     }
 }
@@ -79,7 +79,7 @@ bool get_literal(Token* token, char* buffer, size_t buffer_size) {
 }
 
 static Expression* create_expression(ExpressionType type, Token token) {
-    Expression* expr = (Expression*)malloc(sizeof(Expression));
+    Expression* expr = ALLOCATE(Expression, 1);
     if (expr == NULL) {
         ERROR("Out of memory when allocating expressions");
         exit(EXIT_FAILURE);
@@ -98,7 +98,7 @@ static void next_token(Parser* parser) {
 }
 
 Parser* init_parser(Lexer* lexer) {
-    Parser* parser = malloc(sizeof(Parser));
+    Parser* parser = ALLOCATE(Parser, 1);
     if (!parser) {
         ERROR("Ran out of memory when allocating parser");
         exit(EXIT_FAILURE);
@@ -119,13 +119,15 @@ static void peek_error(Parser* parser, TokenType type)  {
 
 static void add_statement(Program* program, Statement* statement) {
     if (program->statement_count == program->statement_capacity) {
-        program->statement_capacity = program->statement_capacity == 0 ? 8 : program->statement_capacity * 2;
-        program->statements = realloc(program->statements, program->statement_capacity * sizeof(Statement));
+        u64 old_capacity = program->statement_capacity;
+        program->statement_capacity = GROW_CAPACITY(program->statement_capacity);
+        program->statements = GROW_ARRAY(Statement, program->statements, old_capacity, program->statement_capacity);
         if (program->statements == NULL) {
             ERROR("Failed to allocate memory for statements in program.");
             exit(EXIT_FAILURE);
         }
     }
+
     program->statements[program->statement_count] = *statement;
     program->statement_count++;
 }
@@ -279,14 +281,14 @@ static Statement* parse_statement(Parser* parser) {
 }
 
 static Program* init_program() {
-    Program* program = (Program*)malloc(sizeof(Program));
+    Program* program = ALLOCATE(Program, 1);
     if (!program) {
         ERROR("Out of memory, unable to parse program.");
         exit(EXIT_FAILURE);
     }
     program->statement_count = 0;
     program->statement_capacity = 1;
-    program->statements = (Statement*)malloc(sizeof(Statement));
+    program->statements = ALLOCATE(Statement, 1);
     return program;
 }
 
@@ -304,7 +306,9 @@ Program* parse_program(Parser* parser) {
          next_token(parser);
      }
     #ifdef DEBUG_MODE_PARSER
+        printf("--- PROGRAM ---\n");
         debug_program(program);
+        printf("--- PROGRAM ---\n\n");
     #endif
     return program;
 }

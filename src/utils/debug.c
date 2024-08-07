@@ -1,7 +1,5 @@
 #include "debug.h"
 #include "logger.h"
-#include "parser.h"
-#include "lexer.h"
 
 const char* print_token_type(TokenType type) {
     switch (type) {
@@ -84,7 +82,7 @@ static const char* print_expression_type(ExpressionType type) {
 
 static char print_operator(OperatorType type) {
     switch (type) {
-        case OP_ADD: return '+';
+        case PARSE_OP_ADD: return '+';
         default: return '.';
     }
 }
@@ -171,4 +169,96 @@ void debug_program(Program* program) {
         debug_statement(&program->statements[i]);
     }
     printf("}\n");
+}
+
+static int simple_instruction(const char* name, int offset) {
+    printf("%s\n", name);
+    return (offset + 1);
+}
+static int constant_instruction(const char* name, Chunk* chunk, int offset) {
+    // this gets the constant index from the subsequent byte in the chunk
+    uint8_t constant = chunk->code[offset + 1];
+    // we then print it out
+    printf("%-16s %4d '", name, constant);
+    // we then print the actual value stored at that constant index
+    print_value(chunk->constants.values[constant]);
+    printf("'\n");
+    // disassembleInstruction returns offset + 1 (the beginning of the next instruction)
+    // constant returns offset + 2 (1 for opcode, 1 for constant) so we can do the same
+    return (offset + 2);
+}
+
+
+int disassemble_instruction(Chunk* chunk, int offset) {
+    printf("%04d ", offset);
+
+    // this basically checks if the source code line is the same as the previous one
+    if (offset > 0 && chunk->lines[offset] == chunk->lines[offset - 1]) {
+        printf("   | ");
+    } else {
+        printf("%4lu ", chunk->lines[offset]);
+    }
+
+    // This gets a single byte from the bytecode at the given offset, which we
+    // then switch on.
+    uint8_t instruction = chunk->code[offset];
+    switch (instruction)
+    {
+    case OP_ADD:
+        return simple_instruction("OP_ADD", offset);
+    case OP_CONSTANT:
+        return constant_instruction("OP_CONSTANT", chunk, offset);
+    /*case OP_NIL:
+        return simpleInstruction("OP_NIL", offset);
+    case OP_TRUE:
+        return simpleInstruction("OP_TRUE", offset);
+    case OP_FALSE:
+        return simpleInstruction("OP_FALSE", offset);
+    case OP_POP:
+        return simpleInstruction("OP_POP", offset);
+    case OP_GET_LOCAL:
+        return byteInstruction("OP_GET_LOCAL", chunk, offset);
+    case OP_SET_LOCAL:
+        return byteInstruction("OP_SET_LOCAL", chunk, offset);
+    case OP_DEFINE_GLOBAL:
+        return constantInstruction("OP_DEFINE_GLOBAL", chunk, offset);
+    case OP_EQUAL:
+        return simpleInstruction("OP_EQUAL", offset);
+    case OP_GET_GLOBAL:
+        return constantInstruction("OP_GET_GLOBAL", chunk, offset);
+    case OP_GREATER:
+        return simpleInstruction("OP_GREATER", offset);
+    case OP_LESS:
+        return simpleInstruction("OP_LESS", offset);
+    case OP_CONSTANT_LONG:
+        return constantLongInstruction("OP_CONSTANT_LONG", chunk, offset);
+    case OP_SUBTRACT:
+        return simpleInstruction("OP_SUBTRACT", offset);
+    case OP_MULTIPLY:
+        return simpleInstruction("OP_MULTIPLY", offset);
+    case OP_DIVIDE:
+        return simpleInstruction("OP_DIVIDE", offset);
+    case OP_NOT:
+        return simpleInstruction("OP_NOT", offset);
+    case OP_NEGATE:
+        return simpleInstruction("OP_NEGATE", offset);
+    case OP_PRINT:
+        return simpleInstruction("OP_PRINT", offset);
+    case OP_JUMP:
+        return jumpInstruction("OP_JUMP", 1, chunk, offset);
+    case OP_JUMP_IF_FALSE:
+        return jumpInstruction("OP_JUMP_IF_FALSE", 1, chunk, offset);*/
+    case OP_RETURN:
+        return simple_instruction("OP_RETURN", offset);
+    default:
+        // On the off chance theres a compiler bug, we print that too
+        printf("Unknown opcode %d\n", instruction);
+        return (offset + 1);
+    }
+}
+
+void debug_chunk(Chunk* chunk) {
+    for (int offset = 0; offset < (int)chunk->count;) {
+        offset = disassemble_instruction(chunk, offset);
+    }
 }

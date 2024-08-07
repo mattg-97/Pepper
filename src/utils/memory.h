@@ -3,10 +3,20 @@
 
 #include "common.h"
 
-void* set_memory(void* dest, i32 value, u64 size);
-void* copy_memory(void* dest, const void* source, u64 size);
-void* zero_memory(void* block, u64 size);
-void free_memory(void* block, bool aligned);
-void * allocate_memory(u64 size, bool aligned);
+#define ALLOCATE(type, count) \
+    (type*)reallocate(NULL, 0, sizeof(type) * (count))
+
+#define FREE(type, pointer) reallocate(pointer, sizeof(type), 0)
+
+#define GROW_CAPACITY(capacity) \
+    ((capacity) < 8 ? 8 : (capacity) * 2)
+
+#define GROW_ARRAY(type, pointer, oldCount, count) \
+    (type*)reallocate(pointer, sizeof(type) * (oldCount), sizeof(type) * (count))
+
+#define FREE_ARRAY(type, pointer, oldCount) \
+    reallocate(pointer, sizeof(type) * (oldCount), 0)
+
+void* reallocate(void* pointer, u64 oldSize, u64 newSize);
 
 #endif

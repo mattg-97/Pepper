@@ -31,7 +31,7 @@ typedef enum {
 } StatementType;
 
 typedef enum {
-    OP_ADD = 1,
+    PARSE_OP_ADD = 1,
     OP_UNKNOWN,
 } OperatorType;
 
