@@ -16,7 +16,7 @@ Lexer* init_lexer(const char* source) {
     lexer->start = source;
     lexer->current = source;
     lexer->line = 1;
-    lexer->tokens = (Token*)malloc(sizeof(Token));
+    lexer->tokens = (Token*)calloc(1, sizeof(Token));
     lexer->token_capacity = 0;
     lexer->token_count = 0;
     return lexer;
@@ -45,24 +45,12 @@ static bool is_at_end(Lexer* lexer) {
     return *lexer->current == '\0';
 }
 
-static void literal(Token* token) {
-    if (token->length > MAX_TOKEN_LENGTH) {
-        ERROR("Token length %d exceeds max lenght of %d", token->length, MAX_TOKEN_LENGTH);
-        exit(EXIT_FAILURE);
-    }
-    for (u64 i = 0; i < token->length; i++) {
-        token->literal[i] = token->start[i];
-    }
-    token->literal[token->length] = '\0';
-}
-
 static Token create_token(Lexer* lexer, TokenType type) {
     Token token;
     token.type = type;
     token.length = (u64)(lexer->current - lexer->start);
     token.line = lexer->line;
     token.start = lexer->start;
-    literal(&token);
     add_token(lexer, token);
     return token;
 }
@@ -73,7 +61,6 @@ static Token error_token(Lexer* lexer, const char* message) {
     token.length = (u64)strlen(message);
     token.line = lexer->line;
     token.start = message;
-    literal(&token);
     add_token(lexer, token);
     return token;
 }
@@ -237,6 +224,7 @@ Token scan_token(Lexer* lexer) {
         case '*': return create_token(lexer, TOKEN_STAR);
         case '?': return create_token(lexer, TOKEN_QUESTION_MARK);
         case '@': return create_token(lexer, TOKEN_AT);
+        case '%': return create_token(lexer, TOKEN_PERCENT);
         case ':': {
             if (match(lexer, '=')) {
                 return create_token(lexer, TOKEN_ASSIGN);

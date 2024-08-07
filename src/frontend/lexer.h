@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-#define MAX_TOKEN_LENGTH 128
+#define MAX_TOKEN_LENGTH 256
 
 typedef enum {
   // Single-character tokens.
@@ -11,7 +11,7 @@ typedef enum {
   TOKEN_LEFT_BRACE, TOKEN_RIGHT_BRACE,
   TOKEN_COMMA, TOKEN_DOT, TOKEN_MINUS, TOKEN_PLUS,
   TOKEN_SEMICOLON, TOKEN_COLON, TOKEN_SLASH, TOKEN_STAR,
-  TOKEN_QUESTION_MARK, TOKEN_AT,
+  TOKEN_QUESTION_MARK, TOKEN_AT, TOKEN_PERCENT,
   // One or two character tokens.
   TOKEN_BANG, TOKEN_BANG_EQUAL,
   TOKEN_EQUAL, TOKEN_EQUAL_EQUAL,
@@ -37,7 +37,6 @@ typedef struct {
     const char* start;
     u64 length;
     u64 line;
-    char literal[MAX_TOKEN_LENGTH];
 } Token;
 
 typedef struct {

@@ -7,5 +7,6 @@
 #include "defines.h"
 
 #define DEBUG_MODE_TOKEN
+#define DEBUG_MODE_PARSER
 
 #endif

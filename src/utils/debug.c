@@ -1,6 +1,7 @@
 #include "debug.h"
 #include "logger.h"
 #include "parser.h"
+#include "lexer.h"
 
 const char* print_token_type(TokenType type) {
     switch (type) {
@@ -19,6 +20,7 @@ const char* print_token_type(TokenType type) {
         case TOKEN_STAR: return "TOKEN_STAR";
         case TOKEN_QUESTION_MARK: return "TOKEN_QUESTION_MARK";
         case TOKEN_AT: return "TOKEN_AT";
+        case TOKEN_PERCENT: return "TOKEN_PERCENT";
         // One or two character tokens
         case TOKEN_BANG: return "TOKEN_BANG";
         case TOKEN_BANG_EQUAL: return "TOKEN_BANG_EQUAL";
@@ -64,17 +66,63 @@ const char* print_token_type(TokenType type) {
     return "TOKEN_UNKNOWN";
 }
 
+static const char* print_statement_type(StatementType type) {
+    switch (type) {
+        case STMT_ASSIGN: return "STMT_ASSIGN";
+        case STMT_RETURN: return "STMT_RETURN";
+        case STMT_EXPRESSION: return "STMT_EXPRESSION";
+    }
+    return "UNKNOWN_STATEMENT";
+}
+
+static const char* print_expression_type(ExpressionType type) {
+    switch (type) {
+        case EXPR_INFIX: return "Infix";
+        default: return "UNKNOWN_EXPR";
+    }
+}
+
+static char print_operator(OperatorType type) {
+    switch (type) {
+        case OP_ADD: return '+';
+        default: return '.';
+    }
+}
 
 void debug_token(Token* token) {
     const char* type = print_token_type(token->type);
-    INFO("Token: |%s|  Type: |%s|", token->literal, type);
+    char literal[MAX_TOKEN_LENGTH];
+    if (!get_literal(token, literal, sizeof(literal))) {
+        ERROR("Unable to get string literal for use in debugging tokens");
+        exit(EXIT_FAILURE);
+    }
+    printf("Token: |%s|  Type: |%s|\n", literal, type);
 }
 
 void debug_expression(Expression* expression) {
     switch (expression->type) {
-        case EXPR_INT:
-            printf("%s", expression->token.literal);
+        case EXPR_INT: {
+            char literal[MAX_TOKEN_LENGTH];
+            if (!get_literal(&expression->token, literal, sizeof(literal))) {
+                ERROR("Unable to get string literal for use in debugging expressions");
+                exit(EXIT_FAILURE);
+            }
+            printf("%s", literal);
             break;
+        }
+        case EXPR_INFIX: {
+            printf("Expression: {\n\t\t\t");
+            printf("Type: %s,\n\t\t\t", print_expression_type(expression->type));
+            printf("Left: ");
+            debug_expression((Expression*)expression->infix.left);
+            printf(",\n\t\t\t");
+            printf("Operator: %c,\n\t\t\t", print_operator(expression->infix.operator));
+            printf("Right: ");
+            debug_expression((Expression*)expression->infix.right);
+            printf(",\n\t\t");
+            printf("},\n");
+            break;
+        }
         default: {
             printf("YEEET");
             break;
@@ -83,15 +131,20 @@ void debug_expression(Expression* expression) {
 }
 
 void debug_statement(Statement* statement) {
+    printf("Statement: {\n\t\t");
+    printf("Type: %s,\n\t\t", print_statement_type(statement->type));
     switch (statement->type) {
         case STMT_ASSIGN: {
-            printf("Statement {\n\t");
-            printf("%s", statement->token.literal);
-            printf(" := ");
+            char literal[MAX_TOKEN_LENGTH];
+            if (!get_literal(&statement->token, literal, sizeof(literal))) {
+                ERROR("Unable to get string literal for use in debugging statements");
+                exit(EXIT_FAILURE);
+            }
+            printf("Ident: %s\n\t\t", statement->name.value);
+            printf("Expr: ");
             debug_expression(statement->value);
             printf(".");
             printf("\n");
-            printf("}");
             break;
         }
         case STMT_RETURN: {
@@ -99,15 +152,23 @@ void debug_statement(Statement* statement) {
             printf("return statement.\n");
             break;
         }
+        case STMT_EXPRESSION: {
+            debug_expression(statement->value);
+            break;
+        }
         default: {
             printf("UNKNOWN\n");
             break;
         }
     }
+    printf("\t},\n");
 }
 
 void debug_program(Program* program) {
+    printf("Program: {\n");
     for (u64 i = 0; i < program->statement_count; i++) {
+        printf("\t");
         debug_statement(&program->statements[i]);
     }
+    printf("}\n");
 }

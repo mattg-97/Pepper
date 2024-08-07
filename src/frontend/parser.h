@@ -3,35 +3,40 @@
 
 #include "lexer.h"
 
-#define MAX_IDENT_LENGTH 128
-
 typedef enum {
     LOWEST = 0,
+    ASSIGN,
+    LOGICAL_OR,
+    LOGICAL_AND,
     EQUALS,
     LESSGREATER,
     SUM,
     PRODUCT,
     PREFIX,
-    CALL
+    CALL,
+    INDEX,
 } Precedence;
 
 typedef enum {
     EXPR_INFIX = 1,
+    EXPR_PREFIX,
     EXPR_INT,
+    EXPR_FLOAT,
 } ExpressionType;
 
-enum StatementType {
+typedef enum {
     STMT_ASSIGN = 1,
     STMT_RETURN,
     STMT_EXPRESSION,
-};
+} StatementType;
 
 typedef enum {
     OP_ADD = 1,
+    OP_UNKNOWN,
 } OperatorType;
 
 typedef struct {
-    Token* tokens;
+    Lexer* lexer;
     Token current_token;
     Token peek_token;
     u64 current;
@@ -46,21 +51,28 @@ typedef struct {
 } InfixExpression;
 
 typedef struct {
+    struct Expression* right;
+    OperatorType operator;
+} PrefixExpression;
+
+typedef struct {
     ExpressionType type;
     Token token;
     union {
-        int integer;
+        i64 integer;
+        f64 floating_point;
         InfixExpression infix;
+        PrefixExpression prefix;
     };
 } Expression;
 
 typedef struct {
-    char value[MAX_IDENT_LENGTH];
+    char value[MAX_TOKEN_LENGTH];
     Token token;
 } Identifier;
 
 typedef struct {
-    enum StatementType type;
+    StatementType type;
     Token token;
     Identifier name;
     Expression *value;
@@ -77,7 +89,7 @@ typedef struct {
         i64 integer;
         f64 floating_point;
     };
-} NumberLiteral;
+} NumberExpression;
 
 typedef struct {
     Token token;
@@ -90,8 +102,9 @@ typedef struct {
     u64 statement_capacity;
 } Program;
 
-Parser* init_parser(Token* tokens);
+Parser* init_parser(Lexer* lexer);
 void de_init_parser(Parser* parser);
 Program* parse_program(Parser* parser);
+bool get_literal(Token* token, char* buffer, size_t buffer_size);
 
 #endif

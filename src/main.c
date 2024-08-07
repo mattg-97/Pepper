@@ -11,7 +11,7 @@ static void repl() {
         }
         Lexer* lexer = init_lexer(line);
         tokenize(lexer);
-        Parser* parser = init_parser(lexer->tokens);
+        Parser* parser = init_parser(lexer);
         parse_program(parser);
         de_init_lexer(lexer);
     }
@@ -49,7 +49,7 @@ static void run_file(const char* path) {
     char* source = read_file(path);
     Lexer* lexer = init_lexer(source);
     tokenize(lexer);
-    Parser* parser = init_parser(lexer->tokens);
+    Parser* parser = init_parser(lexer);
     parse_program(parser);
     de_init_lexer(lexer);
     free(source);
