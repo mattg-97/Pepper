@@ -38,7 +38,7 @@ static void interpret_statement(Chunk* chunk, Statement* statement) {
                     emit_constant(chunk, INT_VAL(left->integer), left->token.line);
                     emit_constant(chunk, INT_VAL(right->integer), right->token.line);
                     emit_byte(chunk, OP_ADD, right->token.line);
-                    emit_byte(chunk, OP_RETURN, right->token.line);
+                    emit_byte(chunk, OP_POP, right->token.line);
                     break;
                 }
                 default: break;
@@ -57,5 +57,6 @@ Chunk* interpret_program(Program* program) {
     #ifdef DEBUG_MODE_INTERPRETER
     debug_chunk(chunk);
     #endif
+    emit_byte(chunk, OP_RETURN, program->statements[program->statement_count].token.line);
     return chunk;
 }

@@ -196,7 +196,7 @@ static Expression* parse_number_expression(Parser* parser) {
         }
     }
     Expression* expr = create_expression(EXPR_INT, parser->current_token);
-    expr->integer = (i64)atoi(literal);
+    expr->integer = (u64)atoi(literal);
     return expr;
 }
 

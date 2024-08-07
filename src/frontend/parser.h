@@ -59,7 +59,7 @@ typedef struct {
     ExpressionType type;
     Token token;
     union {
-        i64 integer;
+        u64 integer;
         f64 floating_point;
         InfixExpression infix;
         PrefixExpression prefix;

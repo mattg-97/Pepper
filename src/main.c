@@ -1,6 +1,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "interpreter.h"
+#include "object.h"
 #include "vm.h"
 
 static void repl() {
@@ -48,14 +49,24 @@ static char* read_file(const char* path) {
 
 
 static void run_file(const char* path) {
+    // Read in the file
     char* source = read_file(path);
+    // Initialise the lexer
     Lexer* lexer = init_lexer(source);
+    // Tokenise the source code
     tokenize(lexer);
+    // Initialize the parser
     Parser* parser = init_parser(lexer);
+    // Parse the program
     Program* program = parse_program(parser);
+    // Interpret the program
     Chunk* chunk = interpret_program(program);
+    // Initialize the VM
     VM* vm = init_vm(chunk);
+    init_objects(vm);
+    // Run the bytecode on the vm
     run(vm);
+
     de_init_lexer(lexer);
     free(source);
     // exit codes differ for each error

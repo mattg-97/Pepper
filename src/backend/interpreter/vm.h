@@ -7,6 +7,7 @@
 #include "chunk.h"
 #include "value.h"
 #include "debug.h"
+#include "table.h"
 
 typedef enum {
     OK,
@@ -17,6 +18,9 @@ typedef struct {
     uint8_t* ip;
     Value stack[STACK_MAX];
     Value* stack_top;
+    Obj* objects;
+    Table strings;
+    Table globals;
 } VM;
 
 VM* init_vm(Chunk* chunk);
