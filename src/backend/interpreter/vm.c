@@ -1,6 +1,8 @@
 #include "vm.h"
+#include "chunk.h"
 #include "memory.h"
 #include "debug.h"
+#include "value.h"
 
 static void reset_stack(VM* vm) {
     vm->stack_top = vm->stack;
@@ -10,16 +12,16 @@ VM* init_vm(Chunk* chunk) {
     VM* vm = ALLOCATE(VM, 1);
     reset_stack(vm);
     vm->chunk = chunk;
-    initTable(&vm->strings);
-    initTable(&vm->globals);
+    init_table(&vm->strings);
+    init_table(&vm->globals);
     vm->ip = vm->chunk->code;
     return vm;
 }
 
 void free_vm(VM* vm) {
     reset_stack(vm);
-    freeTable(&vm->globals);
-    freeTable(&vm->strings);
+    free_table(&vm->globals);
+    free_table(&vm->strings);
 }
 
 static Value pop(VM* vm) {
@@ -35,6 +37,12 @@ static void push(VM* vm, Value value) {
 Result run(VM* vm) {
     #define READ_BYTE() (*vm->ip++)
     #define READ_CONSTANT() (vm->chunk->constants.values[READ_BYTE()])
+    #define BINARY_OP(op) \
+    do { \
+      double b = pop(); \
+      double a = pop(); \
+      push(a op b); \
+    } while (false)
     for (;;) {
     #ifdef DEBUG_MODE_VM
     printf("         ");
@@ -56,9 +64,31 @@ Result run(VM* vm) {
             break;
         }
         case OP_ADD: {
-            u64 a = AS_INT(pop(vm));
-            u64 b = AS_INT(pop(vm));
+            i64 a = AS_INT(pop(vm));
+            i64 b = AS_INT(pop(vm));
             push(vm, INT_VAL(a + b));
+            break;
+        }
+        case OP_SUBTRACT: {
+            i64 b = AS_INT(pop(vm));
+            i64 a = AS_INT(pop(vm));
+            push(vm, INT_VAL(a - b));
+            break;
+        }
+        case OP_MULTIPLY: {
+            i64 b = AS_INT(pop(vm));
+            i64 a = AS_INT(pop(vm));
+            push(vm, INT_VAL(a * b));
+            break;
+        }
+        case OP_DIVIDE: {
+            i64 b = AS_INT(pop(vm));
+            i64 a = AS_INT(pop(vm));
+            push(vm, INT_VAL(a / b));
+            break;
+        }
+        case OP_NEGATE: {
+            push(vm, pop(vm));
             break;
         }
         case OP_POP: {
@@ -73,5 +103,6 @@ Result run(VM* vm) {
     }
     #undef READ_BYTE
     #undef READ_CONSTANT
+    #undef BINARY_OP
     return OK;
 }

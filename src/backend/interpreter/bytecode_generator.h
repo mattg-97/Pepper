@@ -5,6 +5,10 @@
 #include "chunk.h"
 #include "parser.h"
 
-Chunk* interpret_program(Program* program);
+typedef struct {
+    Chunk* chunk;
+} BytecodeGenerator;
+
+Chunk* generate_bytecode(Program* program);
 
 #endif

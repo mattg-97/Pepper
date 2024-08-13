@@ -29,12 +29,12 @@ struct ObjString {
     uint32_t hash;
 };
 
-ObjString* takeString(char* chars, int length);
-ObjString* copyString(const char* chars, int length);
-void printObject(Value value);
+ObjString* take_string(char* chars, int length);
+ObjString* copy_string(const char* chars, int length);
+void print_object(Value value);
 void init_objects(VM* vmach);
 
-static inline bool isObjType(Value value, ObjType type) {
+static inline bool is_obj_type(Value value, ObjType type) {
   return IS_OBJ(value) && AS_OBJ(value)->type == type;
 }
 

@@ -32,6 +32,15 @@ typedef enum {
 
 typedef enum {
     PARSE_OP_ADD = 1,
+    PARSE_OP_MINUS,
+    PARSE_OP_DIVIDE, 
+    PARSE_OP_MULTIPLY,
+    PARSE_OP_EQUALITY,
+    PARSE_OP_GREATER,
+    PARSE_OP_EQUAL_GREATER,
+    PARSE_OP_LESS,
+    PARSE_OP_EQUAL_LESS,
+    PARSE_OP_NOT_EQUAL,
     OP_UNKNOWN,
 } OperatorType;
 
@@ -40,6 +49,8 @@ typedef struct {
     Token current_token;
     Token peek_token;
     u64 current;
+    bool has_error;
+    bool panic_mode;
 } Parser;
 
 struct Expression;
@@ -59,7 +70,7 @@ typedef struct {
     ExpressionType type;
     Token token;
     union {
-        u64 integer;
+        i64 integer;
         f64 floating_point;
         InfixExpression infix;
         PrefixExpression prefix;

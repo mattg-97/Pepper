@@ -12,6 +12,15 @@ static Expression* parse_expression(Parser* parser, Precedence precedence);
 static OperatorType get_operator(TokenType type) {
     switch (type) {
         case TOKEN_PLUS: return PARSE_OP_ADD;
+        case TOKEN_STAR: return PARSE_OP_MULTIPLY;
+        case TOKEN_SLASH: return PARSE_OP_DIVIDE;
+        case TOKEN_MINUS: return PARSE_OP_MINUS;
+        case TOKEN_EQUAL_EQUAL: return PARSE_OP_EQUALITY;
+        case TOKEN_GREATER_EQUAL: return PARSE_OP_EQUAL_GREATER;
+        case TOKEN_GREATER: return PARSE_OP_GREATER;
+        case TOKEN_BANG_EQUAL: return PARSE_OP_NOT_EQUAL;
+        case TOKEN_LESS: return PARSE_OP_LESS;
+        case TOKEN_LESS_EQUAL: return PARSE_OP_EQUAL_LESS;
         default: return OP_UNKNOWN;
     }
 }
@@ -103,12 +112,34 @@ Parser* init_parser(Lexer* lexer) {
         ERROR("Ran out of memory when allocating parser");
         exit(EXIT_FAILURE);
     }
+    parser->has_error = false;
+    parser->panic_mode = false;
     parser->current = 0;
     parser->lexer = lexer;
     next_token(parser);
     next_token(parser);
     return parser;
 }
+
+/*static void error_at(Parser* parser, const char* message) {
+    if (parser->panic_mode) return;
+    parser->panic_mode = true;
+    Token* token = &parser->current_token;
+    fprintf(stderr, "[line %lu] Error", token->line);
+    if (token->type == TOKEN_EOF) fprintf(stderr, " at end.");
+    if (token->type == TOKEN_ERROR) {
+
+    } else {
+        fprintf(stderr, " at '%.*s'", (int)token->length, token->start);
+    }
+    fprintf(stderr, ": %s\n", message);
+    parser->has_error = true;
+}
+
+static void error(Parser* parser, const char* message) {
+    error_at(parser, message);
+}*/
+
 
 static void peek_error(Parser* parser, TokenType type)  {
     const char* expected = print_token_type(type);
@@ -196,7 +227,7 @@ static Expression* parse_number_expression(Parser* parser) {
         }
     }
     Expression* expr = create_expression(EXPR_INT, parser->current_token);
-    expr->integer = (u64)atoi(literal);
+    expr->integer = (i64)atoi(literal);
     return expr;
 }
 
@@ -236,9 +267,17 @@ static Expression* parse_expression(Parser* parser, Precedence precedence) {
         }
     }
 
-    while(!peek_token_is(parser, TOKEN_DOT) && precedence < CALL) {
+    while(!peek_token_is(parser, TOKEN_DOT) && precedence < get_token_precedence(parser->peek_token)) {
         switch (parser->peek_token.type) {
             case TOKEN_PLUS:
+            case TOKEN_STAR:
+            case TOKEN_SLASH:
+            case TOKEN_GREATER:
+            case TOKEN_GREATER_EQUAL:
+            case TOKEN_EQUAL_EQUAL:
+            case TOKEN_BANG_EQUAL:
+            case TOKEN_LESS:
+            case TOKEN_LESS_EQUAL:
             case TOKEN_MINUS: {
                 next_token(parser);
                 left = parse_infix_expression(parser, left);

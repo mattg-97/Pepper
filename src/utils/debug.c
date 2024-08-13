@@ -83,6 +83,9 @@ static const char* print_expression_type(ExpressionType type) {
 static char print_operator(OperatorType type) {
     switch (type) {
         case PARSE_OP_ADD: return '+';
+        case PARSE_OP_MINUS: return '-';
+        case PARSE_OP_DIVIDE: return '/';
+        case PARSE_OP_MULTIPLY: return '*';
         default: return '.';
     }
 }
@@ -206,12 +209,20 @@ int disassemble_instruction(Chunk* chunk, int offset) {
     {
     case OP_ADD:
         return simple_instruction("OP_ADD", offset);
+    case OP_DIVIDE:
+        return simple_instruction("OP_DIVIDE", offset);
+    case OP_MULTIPLY:
+        return simple_instruction("OP_MULTIPLY", offset);
+    case OP_SUBTRACT:
+        return simple_instruction("OP_MINUS", offset);
     case OP_CONSTANT:
         return constant_instruction("OP_CONSTANT", chunk, offset);
     case OP_POP:
         return simple_instruction("OP_POP", offset);
     case OP_RETURN:
         return simple_instruction("OP_RETURN", offset);
+    case OP_NEGATE:
+        return simple_instruction("OP_NEGATE", offset);
     default:
         // On the off chance theres a compiler bug, we print that too
         printf("Unknown opcode %d\n", instruction);

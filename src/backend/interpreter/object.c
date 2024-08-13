@@ -33,7 +33,7 @@ static ObjString* allocateString(char* chars, int length, uint32_t hash) {
     string->length = length;
     string->chars = chars;
     string->hash = hash;
-    tableSet(&vm->strings, string, NIL_VAL);
+    table_set(&vm->strings, string, NIL_VAL);
     return string;
 }
 
@@ -46,9 +46,9 @@ static uint32_t hashString(const char* key, int length) {
   return hash;
 }
 
-ObjString* takeString(char* chars, int length) {
+ObjString* take_string(char* chars, int length) {
   uint32_t hash = hashString(chars, length);
-  ObjString* interned = tableFindString(&vm->strings, chars, length,
+  ObjString* interned = table_find_string(&vm->strings, chars, length,
                                         hash);
   if (interned != NULL) {
     FREE_ARRAY(char, chars, (u64)length + 1);
@@ -59,9 +59,9 @@ ObjString* takeString(char* chars, int length) {
 }
 
 
-ObjString* copyString(const char* chars, int length) {
+ObjString* copy_string(const char* chars, int length) {
   uint32_t hash = hashString(chars, length);
-  ObjString* interned = tableFindString(&vm->strings, chars, length,
+  ObjString* interned = table_find_string(&vm->strings, chars, length,
                                         hash);
   if (interned != NULL) return interned;
 
@@ -71,7 +71,7 @@ ObjString* copyString(const char* chars, int length) {
   return allocateString(heapChars, length, hash);
 }
 
-void printObject(Value value) {
+void print_object(Value value) {
     switch (OBJ_TYPE(value)) {
         case OBJ_STRING:
             printf("%s", AS_CSTRING(value));

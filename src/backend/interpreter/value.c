@@ -38,7 +38,7 @@ void print_value(Value value) {
                 printf(AS_BOOL(value) ? "true" : "false");
                 break;
             case VAL_FLOATING: printf("%f", AS_FLOATING(value)); break;
-            case VAL_INT: printf("%lu", AS_INT(value)); break;
+            case VAL_INT: printf("%ld", AS_INT(value)); break;
             default: printf("YEET"); break;
         }
 }

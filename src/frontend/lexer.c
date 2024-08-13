@@ -225,6 +225,20 @@ Token scan_token(Lexer* lexer) {
         case '?': return create_token(lexer, TOKEN_QUESTION_MARK);
         case '@': return create_token(lexer, TOKEN_AT);
         case '%': return create_token(lexer, TOKEN_PERCENT);
+        case '<': {
+            if (match(lexer, '=')) {
+                return create_token(lexer, TOKEN_LESS_EQUAL);
+            } else {
+                return create_token(lexer, TOKEN_LESS);
+            }
+        }
+        case '>': {
+            if (match(lexer, '=')) {
+                return create_token(lexer, TOKEN_GREATER_EQUAL);
+            } else {
+                return create_token(lexer, TOKEN_GREATER);
+            }
+        }
         case ':': {
             if (match(lexer, '=')) {
                 return create_token(lexer, TOKEN_ASSIGN);

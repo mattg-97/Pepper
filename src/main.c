@@ -1,6 +1,6 @@
 #include "lexer.h"
 #include "parser.h"
-#include "interpreter.h"
+#include "bytecode_generator.h"
 #include "object.h"
 #include "vm.h"
 
@@ -60,7 +60,7 @@ static void run_file(const char* path) {
     // Parse the program
     Program* program = parse_program(parser);
     // Interpret the program
-    Chunk* chunk = interpret_program(program);
+    Chunk* chunk = generate_bytecode(program);
     // Initialize the VM
     VM* vm = init_vm(chunk);
     init_objects(vm);
