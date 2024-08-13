@@ -5,6 +5,7 @@
 #include "logger.h"
 #include "parser.h"
 #include "debug.h"
+#include "object.h"
 #include "value.h"
 #include <stdint.h>
 
@@ -54,19 +55,45 @@ static void generate_float_expression(Chunk* chunk, Expression* expression) {
     emit_constant(chunk, FLOATING_VAL(expression->floating_point), expression->token.line);
 }
 
+static void generate_bool_expression(Chunk* chunk, Expression* expression) {
+    emit_constant(chunk, BOOL_VAL(expression->boolean), expression->token.line);
+}
+
+static void generate_if_expression(Chunk* chunk, Expression* expression) {
+    generate_expression(chunk, (Expression*)expression->if_expr.condition);
+
+}
+
 static void generate_expression(Chunk* chunk, Expression* expression) {
     switch (expression->type) {
         case EXPR_INFIX: generate_infix_expression(chunk, expression); break;
         case EXPR_INT: generate_int_expression(chunk, expression); break;
         case EXPR_FLOAT: generate_float_expression(chunk, expression); break;
+        case EXPR_BOOL: generate_bool_expression(chunk, expression); break;
+        case EXPR_IF: generate_if_expression(chunk, expression); break;
         default: break;
     }
+}
+
+static void generate_assign_statement(Chunk* chunk, Statement* statement) {
+    generate_expression(chunk, statement->value);
+    uint8_t assign_const = create_constant(chunk, OBJ_VAL((Obj*)copy_string(statement->name.value, (int)statement->name.token.length)));
+    emit_bytes(chunk, OP_DEFINE_GLOBAL, assign_const, statement->token.line);
 }
 
 static void generate_statement(Chunk* chunk, Statement* statement) {
     switch (statement->type) {
         case STMT_EXPRESSION: {
             generate_expression(chunk, statement->value);
+            break;
+        }
+        case STMT_PRINT: {
+            generate_expression(chunk, statement->value);
+            emit_byte(chunk, OP_PRINT, statement->token.line);
+            break;
+        }
+        case STMT_ASSIGN: {
+            generate_assign_statement(chunk, statement);
             break;
         }
         default: break;

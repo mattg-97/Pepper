@@ -8,6 +8,7 @@
 #include "debug.h"
 
 static Expression* parse_expression(Parser* parser, Precedence precedence);
+static Statement* parse_statement(Parser* parser);
 
 static OperatorType get_operator(TokenType type) {
     switch (type) {
@@ -44,6 +45,7 @@ static Precedence get_token_precedence(Token token) {
             break;
         }
         case TOKEN_EQUAL:
+        case TOKEN_EQUAL_EQUAL:
         case TOKEN_BANG_EQUAL: {
             return EQUALS;
             break;
@@ -121,7 +123,7 @@ Parser* init_parser(Lexer* lexer) {
     return parser;
 }
 
-/*static void error_at(Parser* parser, const char* message) {
+static void error(Parser* parser, const char* message) {
     if (parser->panic_mode) return;
     parser->panic_mode = true;
     Token* token = &parser->current_token;
@@ -135,11 +137,6 @@ Parser* init_parser(Lexer* lexer) {
     fprintf(stderr, ": %s\n", message);
     parser->has_error = true;
 }
-
-static void error(Parser* parser, const char* message) {
-    error_at(parser, message);
-}*/
-
 
 static void peek_error(Parser* parser, TokenType type)  {
     const char* expected = print_token_type(type);
@@ -194,9 +191,8 @@ static void parse_assignment_statement(Parser* parser, Statement* statement) {
         exit(EXIT_FAILURE);
     }
     statement->name = ident;
-    Expression* expression = create_expression(EXPR_INT, parser->peek_token);
-    statement->value = expression;
-    statement->value->token = parser->peek_token;
+    next_token(parser);
+    statement->value = parse_expression(parser, LOWEST);
 
     while (!current_token_is(parser, TOKEN_DOT)) {
         next_token(parser);
@@ -245,13 +241,85 @@ static Expression* parse_infix_expression(Parser* parser, Expression* left) {
     expr->infix.operator = get_operator(parser->current_token.type);
     Precedence precedence = get_token_precedence(parser->current_token);
     next_token(parser);
-    expr->infix.right = (struct Expression*)parse_expression(parser, precedence);
+    Expression* right_expr = parse_expression(parser, precedence);
+    expr->infix.right = (struct Expression*)right_expr;
+    if (expr->infix.operator == PARSE_OP_DIVIDE && right_expr->integer == 0) {
+        error(parser, "Divide by zero error!");
+    }
+    return expr;
+}
+
+static Expression* parse_boolean_expression(Parser* parser) {
+    Expression* expr = create_expression(EXPR_BOOL, parser->current_token);
+    expr->boolean = (parser->current_token.type == TOKEN_TRUE);
+    return expr;
+}
+
+static Expression* parse_grouped_expression(Parser* parser) {
+    next_token(parser);
+    Expression* expr = parse_expression(parser, LOWEST);
+    if (!expect_peek(parser, TOKEN_RIGHT_PAREN)) {
+        return NULL;
+    }
+    return expr;
+}
+
+static Statement* parse_block_statement(Parser* parser) {
+    u64 statement_count = 1;
+    Statement* block_stmt = ALLOCATE(Statement, statement_count);
+    next_token(parser);
+
+    while (!current_token_is(parser, TOKEN_RIGHT_BRACE) && !current_token_is(parser, TOKEN_EOF)) {
+        Statement* stmt = parse_statement(parser);
+        if (stmt != NULL) {
+            block_stmt = GROW_ARRAY(Statement, block_stmt, statement_count, statement_count + 1);
+            block_stmt[statement_count - 1] = *stmt;
+            statement_count++;
+        }
+        if (peek_token_is(parser, TOKEN_DOT)) next_token(parser);
+        next_token(parser);
+    }
+    return block_stmt;
+}
+
+static Expression* parse_if_expression(Parser* parser) {
+    Expression* expr = create_expression(EXPR_IF, parser->current_token);
+
+    if (!expect_peek(parser, TOKEN_LEFT_PAREN)) return NULL;
+
+    next_token(parser);
+    expr->if_expr.condition = (struct Expression*)parse_expression(parser, LOWEST);
+
+    if (!expect_peek(parser, TOKEN_RIGHT_PAREN)) return NULL;
+
+    expr->if_expr.consequence = (struct Statement*)parse_block_statement(parser);
+
+    if (peek_token_is(parser, TOKEN_ELSE)) {
+        next_token(parser);
+        if (!expect_peek(parser, TOKEN_LEFT_BRACE)) {
+            return NULL;
+        }
+        expr->if_expr.alternative = (struct Statement*)parse_block_statement(parser);
+    }
     return expr;
 }
 
 static Expression* parse_expression(Parser* parser, Precedence precedence) {
     Expression* left = NULL;
     switch (parser->current_token.type) {
+        case TOKEN_IF: {
+            left = parse_if_expression(parser);
+            break;
+        }
+        case TOKEN_LEFT_PAREN: {
+            left = parse_grouped_expression(parser);
+            break;
+        }
+        case TOKEN_TRUE:
+        case TOKEN_FALSE: {
+            left = parse_boolean_expression(parser);
+            break;
+        }
         case TOKEN_NUMBER: {
             left = parse_number_expression(parser);
             break;
@@ -298,6 +366,16 @@ static void parse_expression_statement(Parser* parser, Statement* statement) {
     }
 }
 
+static void parse_print_statement(Parser* parser, Statement* statement) {
+    statement->type = STMT_PRINT;
+    statement->token = parser->current_token;
+    next_token(parser);
+    statement->value = parse_expression(parser, LOWEST);
+    if (!peek_token_is(parser, TOKEN_DOT)) {
+        next_token(parser);
+    }
+}
+
 static Statement* parse_statement(Parser* parser) {
     Statement* stmt = (Statement*)malloc(sizeof(Statement));
     switch (parser->current_token.type) {
@@ -309,6 +387,10 @@ static Statement* parse_statement(Parser* parser) {
         }
         case TOKEN_RETURN: {
             parse_return_statement(parser, stmt);
+            break;
+        }
+        case TOKEN_PRINT: {
+            parse_print_statement(parser, stmt);
             break;
         }
         default: {

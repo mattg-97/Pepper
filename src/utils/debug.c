@@ -69,6 +69,7 @@ static const char* print_statement_type(StatementType type) {
         case STMT_ASSIGN: return "STMT_ASSIGN";
         case STMT_RETURN: return "STMT_RETURN";
         case STMT_EXPRESSION: return "STMT_EXPRESSION";
+        case STMT_PRINT: return "STMT_PRINT";
     }
     return "UNKNOWN_STATEMENT";
 }
@@ -86,6 +87,7 @@ static char print_operator(OperatorType type) {
         case PARSE_OP_MINUS: return '-';
         case PARSE_OP_DIVIDE: return '/';
         case PARSE_OP_MULTIPLY: return '*';
+        case PARSE_OP_EQUALITY: return '=';
         default: return '.';
     }
 }
@@ -124,6 +126,19 @@ void debug_expression(Expression* expression) {
             printf("},\n");
             break;
         }
+        case EXPR_BOOL: {
+            char literal[MAX_TOKEN_LENGTH];
+            if (!get_literal(&expression->token, literal, sizeof(literal))) {
+                ERROR("Unable to get string literal for use in debugging expressions");
+                exit(EXIT_FAILURE);
+            }
+            printf("%s", literal);
+            break;
+        }
+        case EXPR_IF: {
+            printf("Expression: if");
+            break;
+        }
         default: {
             printf("YEEET");
             break;
@@ -154,6 +169,10 @@ void debug_statement(Statement* statement) {
             break;
         }
         case STMT_EXPRESSION: {
+            debug_expression(statement->value);
+            break;
+        }
+        case STMT_PRINT: {
             debug_expression(statement->value);
             break;
         }
@@ -223,6 +242,10 @@ int disassemble_instruction(Chunk* chunk, int offset) {
         return simple_instruction("OP_RETURN", offset);
     case OP_NEGATE:
         return simple_instruction("OP_NEGATE", offset);
+    case OP_PRINT:
+        return simple_instruction("OP_PRINT", offset);
+    case OP_DEFINE_GLOBAL:
+        return constant_instruction("OP_DEFINE_GLOBAL", chunk, offset);
     default:
         // On the off chance theres a compiler bug, we print that too
         printf("Unknown opcode %d\n", instruction);

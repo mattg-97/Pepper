@@ -22,12 +22,15 @@ typedef enum {
     EXPR_PREFIX,
     EXPR_INT,
     EXPR_FLOAT,
+    EXPR_BOOL,
+    EXPR_IF,
 } ExpressionType;
 
 typedef enum {
     STMT_ASSIGN = 1,
     STMT_RETURN,
     STMT_EXPRESSION,
+    STMT_PRINT,
 } StatementType;
 
 typedef enum {
@@ -54,6 +57,7 @@ typedef struct {
 } Parser;
 
 struct Expression;
+struct Statement;
 
 typedef struct {
     struct Expression* left;
@@ -67,13 +71,21 @@ typedef struct {
 } PrefixExpression;
 
 typedef struct {
+    struct Expression* condition;
+    struct Statement* consequence;
+    struct Statement* alternative;
+} IfExpression;
+
+typedef struct {
     ExpressionType type;
     Token token;
     union {
         i64 integer;
         f64 floating_point;
+        bool boolean;
         InfixExpression infix;
         PrefixExpression prefix;
+        IfExpression if_expr;
     };
 } Expression;
 

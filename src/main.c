@@ -59,6 +59,10 @@ static void run_file(const char* path) {
     Parser* parser = init_parser(lexer);
     // Parse the program
     Program* program = parse_program(parser);
+
+    if (parser->has_error || parser->panic_mode) {
+        exit(EXIT_FAILURE);
+    }
     // Interpret the program
     Chunk* chunk = generate_bytecode(program);
     // Initialize the VM

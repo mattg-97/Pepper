@@ -1,6 +1,7 @@
 #include "vm.h"
 #include "chunk.h"
 #include "memory.h"
+#include "object.h"
 #include "debug.h"
 #include "value.h"
 
@@ -37,6 +38,7 @@ static void push(VM* vm, Value value) {
 Result run(VM* vm) {
     #define READ_BYTE() (*vm->ip++)
     #define READ_CONSTANT() (vm->chunk->constants.values[READ_BYTE()])
+    #define READ_STRING() AS_STRING(READ_CONSTANT())
     #define BINARY_OP(op) \
     do { \
       double b = pop(); \
@@ -95,6 +97,16 @@ Result run(VM* vm) {
             pop(vm);
             break;
         }
+        case OP_PRINT: {
+            print_value(pop(vm));
+            break;
+        }
+        case OP_DEFINE_GLOBAL: {
+            ObjString* name = READ_STRING();
+            table_set(&vm->globals, name, vm->stack[*vm->ip]);
+            pop(vm);
+            break;
+        }
         case OP_RETURN:
             return OK;
             break;
@@ -103,6 +115,7 @@ Result run(VM* vm) {
     }
     #undef READ_BYTE
     #undef READ_CONSTANT
+    #undef READ_STRING
     #undef BINARY_OP
     return OK;
 }
