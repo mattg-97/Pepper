@@ -4,10 +4,11 @@
 #include "logger.h"
 #include "parser.h"
 #include "debug.h"
-#include "object.h"
 #include <stdint.h>
 
 static void generate_expression(Chunk* chunk, Expression* expression);
+static void generate_statement(Chunk* chunk, Statement* statement);
+
 
 static void emit_byte(Chunk* chunk, uint8_t byte, u64 line) {
     write_chunk(chunk, byte, line);
@@ -40,6 +41,7 @@ static void generate_infix_expression(Chunk* chunk, Expression* expression) {
         case PARSE_OP_MINUS: emit_byte(chunk, OP_SUBTRACT, expression->token.line); break;
         case PARSE_OP_MULTIPLY: emit_byte(chunk, OP_MULTIPLY, expression->token.line); break;
         case PARSE_OP_DIVIDE: emit_byte(chunk, OP_DIVIDE, expression->token.line); break;
+        case PARSE_OP_GREATER: emit_byte(chunk, OP_GREATER, expression->token.line); break;
         default: emit_byte(chunk, OP_UNKNOWN, expression->token.line); break;
     }
     //emit_byte(chunk, OP_POP, expression->token.line);
@@ -59,7 +61,8 @@ static void generate_bool_expression(Chunk* chunk, Expression* expression) {
 
 static void generate_if_expression(Chunk* chunk, Expression* expression) {
     generate_expression(chunk, (Expression*)expression->if_expr.condition);
-
+    generate_statement(chunk, (Statement*)expression->if_expr.consequence);
+    generate_statement(chunk, (Statement*)expression->if_expr.alternative);
 }
 
 static void generate_expression(Chunk* chunk, Expression* expression) {
@@ -75,8 +78,6 @@ static void generate_expression(Chunk* chunk, Expression* expression) {
 
 static void generate_assign_statement(Chunk* chunk, Statement* statement) {
     generate_expression(chunk, statement->value);
-    uint8_t assign_const = create_constant(chunk, OBJ_VAL((Obj*)copy_string(statement->name.value, (int)statement->name.token.length)));
-    emit_bytes(chunk, OP_DEFINE_GLOBAL, assign_const, statement->token.line);
 }
 
 static void generate_statement(Chunk* chunk, Statement* statement) {
@@ -98,22 +99,23 @@ static void generate_statement(Chunk* chunk, Statement* statement) {
     }
 }
 
-static void init_bytecode_generator(BytecodeGenerator* generator, Chunk* chunk) {
-    generator->chunk = chunk;
+static void init_bytecode(ByteCode* byte_code) {
+    Chunk* chunk = ALLOCATE(Chunk, 1);
+    byte_code->chunk = chunk;
+    byte_code->globals = hash_table_init();
+    byte_code->strings = hash_table_init();
 }
 
-Chunk* generate_bytecode(Program* program) {
-    BytecodeGenerator generator;
-    Chunk* chunk = ALLOCATE(Chunk, 1);
-    init_chunk(chunk);
-    init_bytecode_generator(&generator, chunk);
+ByteCode* generate_bytecode(Program* program) {
+    ByteCode* byte_code = ALLOCATE(ByteCode, 1);
+    init_bytecode(byte_code);
 
     for (u64 i = 0; i < program->statement_count; i++) {
-        generate_statement(chunk, &program->statements[i]);
+        generate_statement(byte_code->chunk, &program->statements[i]);
     }
-    emit_byte(chunk, OP_RETURN, program->statements[program->statement_count - 1].token.line);
+    emit_byte(byte_code->chunk, OP_RETURN, program->statements[program->statement_count - 1].token.line);
     #ifdef DEBUG_MODE_INTERPRETER
-    debug_chunk(chunk);
+    debug_chunk(byte_code->chunk);
     #endif
-    return chunk;
+    return byte_code;
 }

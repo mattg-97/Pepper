@@ -3,9 +3,6 @@
 
 #include "common.h"
 
-typedef struct Obj Obj;
-typedef struct ObjString ObjString;
-
 typedef enum {
     VAL_BOOL,
     VAL_INT,
@@ -20,7 +17,7 @@ typedef struct {
         bool boolean;
         i64 integer;
         f64 floating;
-        Obj* obj;
+        void* obj;
     } as;
 } Value;
 

@@ -1,7 +1,7 @@
 #ifndef pepper_hashtable_h
 #define pepper_hashtable_h
 
-#define MAXELEMENTS 1000
+#define MAXELEMENTS 10000
 
 typedef struct {
     /*
@@ -49,5 +49,6 @@ void *hash_table_get_index(HashTable *, int);
     simple destrcutor function
 */
 void hash_table_destroy(HashTable *);
+int get_hash(char s[]);
 
 #endif

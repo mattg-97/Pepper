@@ -14,7 +14,9 @@ typedef enum {
     OP_POP,
     OP_NEGATE,
     OP_PRINT,
+    OP_GET_GLOBAL,
     OP_DEFINE_GLOBAL,
+    OP_GREATER,
 } OpCode;
 
 typedef struct {

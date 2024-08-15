@@ -1,6 +1,7 @@
 #include "value.h"
 #include "memory.h"
 
+
 bool values_equal(Value a, Value b) {
     if (a.type != b.type) return false;
     switch (a.type) {

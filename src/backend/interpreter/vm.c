@@ -1,7 +1,9 @@
+#include <strings.h>
+
 #include "vm.h"
 #include "chunk.h"
 #include "memory.h"
-#include "object.h"
+#include "logger.h"
 #include "debug.h"
 #include "hashtable.h"
 #include "value.h"
@@ -10,13 +12,12 @@ static void reset_stack(VM* vm) {
     vm->stack_top = vm->stack;
 }
 
-VM* init_vm(Chunk* chunk) {
+VM* init_vm(ByteCode* byte_code) {
     VM* vm = ALLOCATE(VM, 1);
     reset_stack(vm);
-    vm->chunk = chunk;
-    vm->strings = hash_table_init();
-    vm->globals = hash_table_init();
-    vm->ip = vm->chunk->code;
+    vm->chunk = byte_code->chunk;
+    vm->strings = byte_code->strings;
+    vm->globals = byte_code->globals;
     return vm;
 }
 
@@ -31,9 +32,14 @@ static Value pop(VM* vm) {
     return *vm->stack_top;
 }
 
+
 static void push(VM* vm, Value value) {
     *vm->stack_top = value;
     vm->stack_top++;
+}
+
+static Value* peek(VM* vm, int distance) {
+    return &vm->stack_top[-1 - distance];
 }
 
 Result run(VM* vm) {
@@ -104,8 +110,32 @@ Result run(VM* vm) {
         }
         case OP_DEFINE_GLOBAL: {
             ObjString* name = READ_STRING();
-            hash_table_add(vm->globals, name->chars, name);
+            if (hash_table_add(vm->globals, name->chars, peek(vm, 0)) == -1) {
+                return RUNTIME_ERROR;
+            }
             pop(vm);
+            break;
+        }
+        case OP_GREATER: {
+            i64 b = AS_INT(pop(vm));
+            i64 a = AS_INT(pop(vm));
+            Value val = {.type = VAL_BOOL};
+            if (a > b) {
+                val.as.boolean = true;
+            } else {
+                val.as.boolean = false;
+            }
+            push(vm, val);
+            break;
+        }
+        case OP_GET_GLOBAL: {
+            ObjString* name = READ_STRING();
+            Value* value = (Value*)hash_table_get(vm->globals, name->chars);
+            if (value == NULL) {
+                ERROR("Undefined variable '%s'.", name->chars);
+                return RUNTIME_ERROR;
+            }
+            push(vm, *value);
             break;
         }
         case OP_RETURN:

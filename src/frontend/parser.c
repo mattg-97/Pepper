@@ -10,6 +10,7 @@
 static Expression* parse_expression(Parser* parser, Precedence precedence);
 static void parse_statement(Parser* parser, Statement* stmt);
 static void free_expression(Expression* expr);
+static void error(Parser* parser, const char* message);
 
 static void free_statement(Statement* stmt) {
     if (stmt == NULL) return;
@@ -31,7 +32,7 @@ static void free_statement(Statement* stmt) {
     }
 
     // If the statement itself was dynamically allocated, free it
-    free(stmt);  // Uncomment if statements are individually allocated
+    //free(stmt);  // Uncomment if statements are individually allocated
 }
 
 static void free_expression(Expression* expr) {
@@ -185,6 +186,14 @@ static void next_token(Parser* parser) {
     parser->current++;
 }
 
+static void consume(Parser* parser, TokenType token_type, const char* message) {
+    if (parser->peek_token.type == token_type) {
+        next_token(parser);
+        return;
+    } 
+    error(parser, message);
+}
+
 Parser* init_parser(Lexer* lexer) {
     Parser* parser = ALLOCATE(Parser, 1);
     if (!parser) {
@@ -215,13 +224,6 @@ static void error(Parser* parser, const char* message) {
     parser->has_error = true;
 }
 
-static void peek_error(Parser* parser, TokenType type)  {
-    const char* expected = print_token_type(type);
-    const char* actual = print_token_type(parser->peek_token.type);
-    ERROR("Line: [ %d ] -> Expected next token to be %s but got %s instead", parser->current_token.line, expected, actual);
-    exit(EXIT_FAILURE);
-}
-
 static void add_statement(Program* program, Statement* statement) {
     if (program->statement_count == program->statement_capacity) {
         u64 old_capacity = program->statement_capacity;
@@ -250,7 +252,7 @@ static bool expect_peek(Parser* parser, TokenType type) {
         next_token(parser);
         return true;
     } else {
-        peek_error(parser, type);
+        consume(parser, type, "Expected next token to be of a particular type");
         return false;
     }
 }
@@ -345,6 +347,7 @@ static Statement* parse_block_statement(Parser* parser) {
     u64 statement_count = 1;
     Statement* block_stmt = ALLOCATE(Statement, statement_count);
     next_token(parser);
+    if (current_token_is(parser, TOKEN_LEFT_BRACE)) next_token(parser);
 
     while (!current_token_is(parser, TOKEN_RIGHT_BRACE) && !current_token_is(parser, TOKEN_EOF)) {
         Statement* stmt = ALLOCATE(Statement, 1);
@@ -445,14 +448,30 @@ static void parse_expression_statement(Parser* parser, Statement* statement) {
     }
 }
 
+static void synchronize(Parser* parser) {
+    while (parser->current_token.type != TOKEN_EOF) {
+        if (parser->current_token.type == TOKEN_DOT) return;
+        switch (parser->current_token.type) {
+            case TOKEN_FN:
+            case TOKEN_IF:
+            case TOKEN_FOR:
+            case TOKEN_WHILE:
+            case TOKEN_RETURN:
+            case TOKEN_PRINT: {
+                return;
+            }
+            default: ;
+        }
+        next_token(parser);
+    }
+}
+
 static void parse_print_statement(Parser* parser, Statement* statement) {
     statement->type = STMT_PRINT;
     statement->token = parser->current_token;
     next_token(parser);
     statement->value = parse_expression(parser, LOWEST);
-    if (!peek_token_is(parser, TOKEN_DOT)) {
-        next_token(parser);
-    }
+    consume(parser, TOKEN_DOT, "Expected '.' after expression");
 }
 
 static void parse_statement(Parser* parser, Statement* stmt) {
@@ -476,6 +495,7 @@ static void parse_statement(Parser* parser, Statement* stmt) {
             break;
         }
     }
+    if (parser->panic_mode) synchronize(parser);
 }
 
 static Program* init_program() {
@@ -486,7 +506,7 @@ static Program* init_program() {
     }
     program->statement_count = 0;
     program->statement_capacity = 1;
-    program->statements = (Statement*)malloc(sizeof(Statement));
+    program->statements = ALLOCATE(Statement, 1);
     return program;
 }
 
@@ -495,12 +515,11 @@ Program* parse_program(Parser* parser) {
 
      while (parser->current_token.type != TOKEN_EOF) {
 
-         Statement* stmt = {};
+         Statement* stmt = ALLOCATE(Statement, 1);
          parse_statement(parser, stmt);
          if (stmt != NULL) {
             add_statement(program, stmt);
          }
-         free(stmt);
 
          if (peek_token_is(parser, TOKEN_DOT)) next_token(parser);
 

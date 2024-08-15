@@ -86,6 +86,7 @@ void *hash_table_get(HashTable *dict, char s[])
 
 void *hash_table_get_index(HashTable *dict, int index)
 {
+    printf("INDEX: %d\n", index);
     if (index >= 0 && index < MAXELEMENTS)
     {
         return dict->elements[index];

@@ -1,7 +1,6 @@
 #include "lexer.h"
 #include "parser.h"
 #include "bytecode_generator.h"
-#include "object.h"
 #include "vm.h"
 
 static void repl() {
@@ -64,10 +63,9 @@ static void run_file(const char* path) {
         exit(EXIT_FAILURE);
     }
     // Interpret the program
-    Chunk* chunk = generate_bytecode(program);
+    ByteCode* byte_code = generate_bytecode(program);
     // Initialize the VM
-    VM* vm = init_vm(chunk);
-    init_objects(vm);
+    VM* vm = init_vm(byte_code);
     // Run the bytecode on the vm
     run(vm);
 

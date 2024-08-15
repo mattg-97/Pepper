@@ -4,11 +4,14 @@
 #include "common.h"
 #include "chunk.h"
 #include "parser.h"
+#include "vm.h"
 
 typedef struct {
     Chunk* chunk;
-} BytecodeGenerator;
+    HashTable* globals;
+    HashTable* strings;
+} ByteCode;
 
-Chunk* generate_bytecode(Program* program);
+ByteCode* generate_bytecode(Program* program);
 
 #endif
