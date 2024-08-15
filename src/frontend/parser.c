@@ -8,7 +8,84 @@
 #include "debug.h"
 
 static Expression* parse_expression(Parser* parser, Precedence precedence);
-static Statement* parse_statement(Parser* parser);
+static void parse_statement(Parser* parser, Statement* stmt);
+static void free_expression(Expression* expr);
+
+static void free_statement(Statement* stmt) {
+    if (stmt == NULL) return;
+
+    switch (stmt->type) {
+        case STMT_EXPRESSION:
+        case STMT_RETURN:
+        case STMT_PRINT:
+            free_expression(stmt->value);
+            break;
+        case STMT_ASSIGN:
+            free_expression(stmt->value);
+            // Assuming name is not dynamically allocated
+            break;
+        // Add cases for other statement types as needed
+        default:
+            fprintf(stderr, "Unknown statement type in free_statement\n");
+            break;
+    }
+
+    // If the statement itself was dynamically allocated, free it
+    free(stmt);  // Uncomment if statements are individually allocated
+}
+
+static void free_expression(Expression* expr) {
+    if (expr == NULL) return;
+
+    switch (expr->type) {
+        case EXPR_INFIX:
+            free_expression((Expression*)expr->infix.left);
+            free_expression((Expression*)expr->infix.right);
+            break;
+        case EXPR_PREFIX:
+            free_expression((Expression*)expr->prefix.right);
+            break;
+        case EXPR_IF:
+            free_expression((Expression*)expr->if_expr.condition);
+            free_statement((Statement*)expr->if_expr.consequence);
+            if (expr->if_expr.alternative) {
+                free_statement((Statement*)expr->if_expr.alternative);
+            }
+            break;
+        // Add cases for other expression types as needed
+        case EXPR_INT:
+        case EXPR_FLOAT:
+        case EXPR_BOOL:
+            // These types don't have nested allocations
+            break;
+        default:
+            // Handle any unexpected types
+            fprintf(stderr, "Unknown expression type in free_expression\n");
+            break;
+    }
+
+    free(expr);
+}
+
+void de_init_program(Program* program) {
+    if (program == NULL) return;
+
+    for (u64 i = 0; i < program->statement_count; i++) {
+        free_statement(&program->statements[i]);
+    }
+
+    free(program->statements);
+    free(program);
+}
+
+void de_init_parser(Parser* parser) {
+    free(parser->lexer->tokens);
+    free(parser->lexer);
+    parser->current = 0;
+    parser->has_error = false;
+    parser->panic_mode = false;
+    free(parser);
+}
 
 static OperatorType get_operator(TokenType type) {
     switch (type) {
@@ -270,7 +347,8 @@ static Statement* parse_block_statement(Parser* parser) {
     next_token(parser);
 
     while (!current_token_is(parser, TOKEN_RIGHT_BRACE) && !current_token_is(parser, TOKEN_EOF)) {
-        Statement* stmt = parse_statement(parser);
+        Statement* stmt = ALLOCATE(Statement, 1);
+        parse_statement(parser, stmt);
         if (stmt != NULL) {
             block_stmt = GROW_ARRAY(Statement, block_stmt, statement_count, statement_count + 1);
             block_stmt[statement_count - 1] = *stmt;
@@ -299,7 +377,8 @@ static Expression* parse_if_expression(Parser* parser) {
         if (!expect_peek(parser, TOKEN_LEFT_BRACE)) {
             return NULL;
         }
-        expr->if_expr.alternative = (struct Statement*)parse_block_statement(parser);
+        struct Statement* alt = (struct Statement*)parse_block_statement(parser);
+        expr->if_expr.alternative = alt;
     }
     return expr;
 }
@@ -376,8 +455,7 @@ static void parse_print_statement(Parser* parser, Statement* statement) {
     }
 }
 
-static Statement* parse_statement(Parser* parser) {
-    Statement* stmt = (Statement*)malloc(sizeof(Statement));
+static void parse_statement(Parser* parser, Statement* stmt) {
     switch (parser->current_token.type) {
         case TOKEN_IDENTIFIER: {
             if (parser->peek_token.type == TOKEN_ASSIGN) {
@@ -398,7 +476,6 @@ static Statement* parse_statement(Parser* parser) {
             break;
         }
     }
-    return stmt;
 }
 
 static Program* init_program() {
@@ -409,7 +486,7 @@ static Program* init_program() {
     }
     program->statement_count = 0;
     program->statement_capacity = 1;
-    program->statements = ALLOCATE(Statement, 1);
+    program->statements = (Statement*)malloc(sizeof(Statement));
     return program;
 }
 
@@ -417,10 +494,13 @@ Program* parse_program(Parser* parser) {
     Program* program = init_program();
 
      while (parser->current_token.type != TOKEN_EOF) {
-         Statement* stmt = parse_statement(parser);
+
+         Statement* stmt = {};
+         parse_statement(parser, stmt);
          if (stmt != NULL) {
             add_statement(program, stmt);
-         };
+         }
+         free(stmt);
 
          if (peek_token_is(parser, TOKEN_DOT)) next_token(parser);
 

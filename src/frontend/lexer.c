@@ -22,7 +22,6 @@ Lexer* init_lexer(const char* source) {
     return lexer;
 }
 void de_init_lexer(Lexer* lexer) {
-    free(lexer->tokens);
     lexer->tokens = NULL;
     lexer->token_count = 0;
     lexer->token_capacity = 0;

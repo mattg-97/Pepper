@@ -1,12 +1,10 @@
 #include "bytecode_generator.h"
-#include "chunk.h"
 #include "lexer.h"
 #include "memory.h"
 #include "logger.h"
 #include "parser.h"
 #include "debug.h"
 #include "object.h"
-#include "value.h"
 #include <stdint.h>
 
 static void generate_expression(Chunk* chunk, Expression* expression);

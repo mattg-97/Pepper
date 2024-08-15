@@ -71,7 +71,9 @@ static void run_file(const char* path) {
     // Run the bytecode on the vm
     run(vm);
 
-    de_init_lexer(lexer);
+    de_init_program(program);
+    de_init_parser(parser);
+    free_vm(vm);
     free(source);
     // exit codes differ for each error
     //if (result == INTERPRET_COMPILE_ERROR) exit(65);

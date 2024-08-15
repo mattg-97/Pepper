@@ -3,6 +3,7 @@
 #include "memory.h"
 #include "object.h"
 #include "debug.h"
+#include "hashtable.h"
 #include "value.h"
 
 static void reset_stack(VM* vm) {
@@ -13,16 +14,16 @@ VM* init_vm(Chunk* chunk) {
     VM* vm = ALLOCATE(VM, 1);
     reset_stack(vm);
     vm->chunk = chunk;
-    init_table(&vm->strings);
-    init_table(&vm->globals);
+    vm->strings = hash_table_init();
+    vm->globals = hash_table_init();
     vm->ip = vm->chunk->code;
     return vm;
 }
 
 void free_vm(VM* vm) {
     reset_stack(vm);
-    free_table(&vm->globals);
-    free_table(&vm->strings);
+    hash_table_destroy(vm->globals);
+    hash_table_destroy(vm->strings);
 }
 
 static Value pop(VM* vm) {
@@ -103,7 +104,7 @@ Result run(VM* vm) {
         }
         case OP_DEFINE_GLOBAL: {
             ObjString* name = READ_STRING();
-            table_set(&vm->globals, name, vm->stack[*vm->ip]);
+            hash_table_add(vm->globals, name->chars, name);
             pop(vm);
             break;
         }

@@ -4,10 +4,8 @@
 #define STACK_MAX 256
 
 #include "common.h"
+#include "hashtable.h"
 #include "chunk.h"
-#include "value.h"
-#include "debug.h"
-#include "table.h"
 
 typedef enum {
     OK,
@@ -19,8 +17,8 @@ typedef struct {
     Value stack[STACK_MAX];
     Value* stack_top;
     Obj* objects;
-    Table strings;
-    Table globals;
+    HashTable* strings;
+    HashTable* globals;
 } VM;
 
 VM* init_vm(Chunk* chunk);

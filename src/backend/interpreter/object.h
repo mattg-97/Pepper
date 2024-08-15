@@ -4,7 +4,6 @@
 #include "common.h"
 #include "value.h"
 #include "vm.h"
-#include <stdint.h>
 
 #define OBJ_TYPE(value)        (AS_OBJ(value)->type)
 
@@ -22,12 +21,12 @@ struct Obj {
     struct Obj* next;
 };
 
-struct ObjString {
+struct ObjString{
     Obj obj;
     int length;
     char* chars;
     uint32_t hash;
-};
+} ;
 
 ObjString* take_string(char* chars, int length);
 ObjString* copy_string(const char* chars, int length);

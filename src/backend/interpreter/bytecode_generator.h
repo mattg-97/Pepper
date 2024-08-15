@@ -1,5 +1,5 @@
-#ifndef pepper_interpreter_h
-#define pepper_interpreter_h
+#ifndef pepper_bytecode_gen_h
+#define pepper_bytecode_gen_h
 
 #include "common.h"
 #include "chunk.h"

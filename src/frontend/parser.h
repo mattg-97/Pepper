@@ -36,7 +36,7 @@ typedef enum {
 typedef enum {
     PARSE_OP_ADD = 1,
     PARSE_OP_MINUS,
-    PARSE_OP_DIVIDE, 
+    PARSE_OP_DIVIDE,
     PARSE_OP_MULTIPLY,
     PARSE_OP_EQUALITY,
     PARSE_OP_GREATER,
@@ -127,6 +127,7 @@ typedef struct {
 
 Parser* init_parser(Lexer* lexer);
 void de_init_parser(Parser* parser);
+void de_init_program(Program* program);
 Program* parse_program(Parser* parser);
 bool get_literal(Token* token, char* buffer, size_t buffer_size);
 

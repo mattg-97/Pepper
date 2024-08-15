@@ -1,7 +1,6 @@
 #ifndef pepper_defines_h
 #define pepper_defines_h
 
-typedef uint8_t byte;
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
@@ -22,7 +21,6 @@ typedef double f64;
 #endif
 
 STATIC_ASSERT(sizeof(u8) == 1, "Expected u8 to be 1 byte.");
-STATIC_ASSERT(sizeof(byte) == 1, "Expected u8 to be 1 byte.");
 STATIC_ASSERT(sizeof(u16) == 2, "Expected u16 to be 2 bytes.");
 STATIC_ASSERT(sizeof(u32) == 4, "Expected u32 to be 4 bytes.");
 STATIC_ASSERT(sizeof(u64) == 8, "Expected u64 to be 8 bytes.");
