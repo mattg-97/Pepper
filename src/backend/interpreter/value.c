@@ -1,6 +1,6 @@
 #include "value.h"
 #include "memory.h"
-
+#include "hashtable.h"
 
 bool values_equal(Value a, Value b) {
     if (a.type != b.type) return false;
@@ -8,7 +8,7 @@ bool values_equal(Value a, Value b) {
         case VAL_BOOL: return AS_BOOL(a) == AS_BOOL(b);
         case VAL_INT: return AS_INT(a) == AS_INT(b);
         case VAL_FLOATING: return AS_FLOATING(a) == AS_FLOATING(b);
-        case VAL_OBJ: return AS_OBJ(a) == AS_OBJ(b);
+        case VAL_STRING: return AS_STRING(a) == AS_STRING(b);
         default: return false; // Unreachable.
     }
 }
@@ -40,6 +40,7 @@ void print_value(Value value) {
                 break;
             case VAL_FLOATING: printf("%f", AS_FLOATING(value)); break;
             case VAL_INT: printf("%ld", AS_INT(value)); break;
-            default: printf("YEET"); break;
+            case VAL_STRING: printf("%s", AS_STRING(value)); break;
+            default: break;
         }
 }

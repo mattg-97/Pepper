@@ -8,7 +8,6 @@
 #include "chunk.h"
 #include "bytecode_generator.h"
 
-
 typedef enum {
     OK,
     RUNTIME_ERROR,

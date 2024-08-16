@@ -4,7 +4,7 @@
 #include "common.h"
 #include "chunk.h"
 #include "parser.h"
-#include "vm.h"
+#include "hashtable.h"
 
 typedef struct {
     Chunk* chunk;

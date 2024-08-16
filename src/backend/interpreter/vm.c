@@ -7,6 +7,7 @@
 #include "debug.h"
 #include "hashtable.h"
 #include "value.h"
+#include "bytecode_generator.h"
 
 static void reset_stack(VM* vm) {
     vm->stack_top = vm->stack;
@@ -15,6 +16,7 @@ static void reset_stack(VM* vm) {
 VM* init_vm(ByteCode* byte_code) {
     VM* vm = ALLOCATE(VM, 1);
     reset_stack(vm);
+    vm->ip = byte_code->chunk->code;
     vm->chunk = byte_code->chunk;
     vm->strings = byte_code->strings;
     vm->globals = byte_code->globals;
@@ -25,6 +27,7 @@ void free_vm(VM* vm) {
     reset_stack(vm);
     hash_table_destroy(vm->globals);
     hash_table_destroy(vm->strings);
+    free(vm->chunk);
 }
 
 static Value pop(VM* vm) {
@@ -109,8 +112,10 @@ Result run(VM* vm) {
             break;
         }
         case OP_DEFINE_GLOBAL: {
-            ObjString* name = READ_STRING();
-            if (hash_table_add(vm->globals, name->chars, peek(vm, 0)) == -1) {
+            char* name = READ_STRING();
+            Value* global = peek(vm, 0);
+            if (hash_table_add(vm->globals, name, global) == -1) {
+                ERROR("Undefined variable '%s'.", name);
                 return RUNTIME_ERROR;
             }
             pop(vm);
@@ -129,10 +134,10 @@ Result run(VM* vm) {
             break;
         }
         case OP_GET_GLOBAL: {
-            ObjString* name = READ_STRING();
-            Value* value = (Value*)hash_table_get(vm->globals, name->chars);
+            char* name = READ_STRING();
+            Value* value = (Value*)hash_table_get(vm->globals, name);
             if (value == NULL) {
-                ERROR("Undefined variable '%s'.", name->chars);
+                ERROR("Undefined variable '%s'.", name);
                 return RUNTIME_ERROR;
             }
             push(vm, *value);

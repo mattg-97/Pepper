@@ -1,7 +1,7 @@
 #ifndef pepper_hashtable_h
 #define pepper_hashtable_h
 
-#define MAXELEMENTS 10000
+#define MAXELEMENTS 256
 
 typedef struct {
     /*

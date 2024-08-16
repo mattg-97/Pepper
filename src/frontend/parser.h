@@ -24,6 +24,7 @@ typedef enum {
     EXPR_FLOAT,
     EXPR_BOOL,
     EXPR_IF,
+    EXPR_IDENT,
 } ExpressionType;
 
 typedef enum {
@@ -77,22 +78,23 @@ typedef struct {
 } IfExpression;
 
 typedef struct {
+    char value[MAX_TOKEN_LENGTH];
+    Token token;
+} Identifier;
+
+typedef struct {
     ExpressionType type;
     Token token;
     union {
         i64 integer;
         f64 floating_point;
         bool boolean;
+        Identifier ident;
         InfixExpression infix;
         PrefixExpression prefix;
         IfExpression if_expr;
     };
 } Expression;
-
-typedef struct {
-    char value[MAX_TOKEN_LENGTH];
-    Token token;
-} Identifier;
 
 typedef struct {
     StatementType type;

@@ -52,10 +52,12 @@ int hash_table_add(HashTable *dic, char label[], void *item)
     if (index < MAXELEMENTS)
     {
         dic->elements[index] = item;
+        dic->number_of_elements++;
         return 0;
     }
 
     /* error case */
+    dic->number_of_elements++;
     return -1;
 }
 
@@ -65,10 +67,12 @@ int hash_table_add_index(HashTable *dic, int index, void *item)
     if (!dic->elements[index])
     {
         dic->elements[index] = item;
+    dic->number_of_elements++;
         return 0;
     }
 
     /* error case */
+    dic->number_of_elements++;
     return -1;
 }
 
@@ -86,7 +90,6 @@ void *hash_table_get(HashTable *dict, char s[])
 
 void *hash_table_get_index(HashTable *dict, int index)
 {
-    printf("INDEX: %d\n", index);
     if (index >= 0 && index < MAXELEMENTS)
     {
         return dict->elements[index];

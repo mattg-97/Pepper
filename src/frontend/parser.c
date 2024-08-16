@@ -386,6 +386,17 @@ static Expression* parse_if_expression(Parser* parser) {
     return expr;
 }
 
+static Expression* parse_identifier(Parser* parser) {
+    Expression* expr = create_expression(EXPR_IDENT, parser->current_token);
+    Identifier ident = {.token = expr->token};
+    if (!get_literal(&expr->token, ident.value, sizeof(ident.value))) {
+        ERROR("Unable to get ident value from string literal");
+        exit(EXIT_FAILURE);
+    }
+    expr->ident = ident;
+    return expr;
+}
+
 static Expression* parse_expression(Parser* parser, Precedence precedence) {
     Expression* left = NULL;
     switch (parser->current_token.type) {
@@ -409,6 +420,10 @@ static Expression* parse_expression(Parser* parser, Precedence precedence) {
         case TOKEN_MINUS:
         case TOKEN_BANG: {
             left = parse_prefix_expression(parser);
+            break;
+        }
+        case TOKEN_IDENTIFIER: {
+            left = parse_identifier(parser);
             break;
         }
         default: {
