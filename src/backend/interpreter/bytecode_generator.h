@@ -13,5 +13,6 @@ typedef struct {
 } ByteCode;
 
 ByteCode* generate_bytecode(Program* program);
+void free_byte_code(ByteCode* byte_code);
 
 #endif

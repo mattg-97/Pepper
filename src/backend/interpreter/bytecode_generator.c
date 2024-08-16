@@ -19,7 +19,7 @@ static void emit_bytes(Chunk* chunk, uint8_t byte1, uint8_t byte2, u64 line) {
 }
 
 static uint8_t create_constant(Chunk* chunk, Value value) {
-    int constant = add_constant(chunk, value);
+    const int constant = add_constant(chunk, value);
     if (constant > UINT8_MAX) {
         ERROR("Too many constants in one chunk");
         return 0;
@@ -34,7 +34,7 @@ static void emit_constant(Chunk* chunk, Value value, u64 line) {
 static void generate_infix_expression(ByteCode* byte_code, Expression* expression) {
     generate_expression(byte_code, (Expression*)expression->infix.left);
     generate_expression(byte_code, (Expression*)expression->infix.right);
-    OperatorType operator = expression->infix.operator;
+    const OperatorType operator = expression->infix.operator;
     switch (operator) {
         case PARSE_OP_ADD: emit_byte(byte_code->chunk, OP_ADD, expression->token.line); break;
         case PARSE_OP_MINUS: emit_byte(byte_code->chunk, OP_SUBTRACT, expression->token.line); break;
@@ -65,7 +65,7 @@ static void generate_if_expression(ByteCode* byte_code, Expression* expression) 
 }
 
 static void generate_ident_expression(ByteCode* byte_code, Expression* expression) {
-    uint8_t const_val = create_constant(byte_code->chunk, STRING_VAL(expression->ident.value));
+    const uint8_t const_val = create_constant(byte_code->chunk, STRING_VAL(expression->ident.value));
     emit_bytes(byte_code->chunk, OP_GET_GLOBAL, const_val, expression->token.line);
 }
 
@@ -81,10 +81,16 @@ static void generate_expression(ByteCode* byte_code, Expression* expression) {
     }
 }
 
+static void generate_instantiate_statement(ByteCode* byte_code, Statement* statement) {
+    generate_expression(byte_code, statement->value);
+    const uint8_t const_val = create_constant(byte_code->chunk, STRING_VAL(statement->name.value));
+    emit_bytes(byte_code->chunk, OP_DEFINE_GLOBAL, const_val, statement->token.line);
+}
+
 static void generate_assign_statement(ByteCode* byte_code, Statement* statement) {
     generate_expression(byte_code, statement->value);
-    uint8_t const_val = create_constant(byte_code->chunk, STRING_VAL(statement->name.value));
-    emit_bytes(byte_code->chunk, OP_DEFINE_GLOBAL, const_val, statement->token.line);
+    const uint8_t const_val = create_constant(byte_code->chunk, STRING_VAL(statement->name.value));
+    emit_bytes(byte_code->chunk, OP_SET_GLOBAL, const_val, statement->token.line);
 }
 
 static void generate_statement(ByteCode* byte_code, Statement* statement) {
@@ -100,6 +106,10 @@ static void generate_statement(ByteCode* byte_code, Statement* statement) {
         }
         case STMT_ASSIGN: {
             generate_assign_statement(byte_code, statement);
+            break;
+        }
+        case STMT_INSTANTIATE: {
+            generate_instantiate_statement(byte_code, statement);
             break;
         }
         default: break;
@@ -126,4 +136,10 @@ ByteCode* generate_bytecode(Program* program) {
     debug_chunk(byte_code->chunk);
     #endif
     return byte_code;
+}
+
+void free_byte_code(ByteCode* byte_code) {
+    free_chunk(byte_code->chunk);
+    hash_table_destroy(byte_code->globals);
+    hash_table_destroy(byte_code->strings);
 }

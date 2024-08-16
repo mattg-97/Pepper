@@ -99,4 +99,6 @@ void *hash_table_get_index(HashTable *dict, int index)
     return NULL;
 }
 
-void hash_table_destroy(HashTable *dict) { free(dict); }
+void hash_table_destroy(HashTable *dict) { 
+    free(dict); 
+}

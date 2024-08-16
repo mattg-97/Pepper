@@ -1,2 +1,4 @@
-x := 5.
-print x.
+myNum := 5.
+y := 8.
+myNum = y.
+print (myNum + y) * 5.

@@ -71,6 +71,7 @@ static void run_file(const char* path) {
 
     de_init_program(program);
     de_init_parser(parser);
+    free_byte_code(byte_code);
     free_vm(vm);
     free(source);
     // exit codes differ for each error

@@ -66,6 +66,7 @@ const char* print_token_type(TokenType type) {
 
 static const char* print_statement_type(StatementType type) {
     switch (type) {
+        case STMT_INSTANTIATE: return "STMT_INSTANTIATE";
         case STMT_ASSIGN: return "STMT_ASSIGN";
         case STMT_RETURN: return "STMT_RETURN";
         case STMT_EXPRESSION: return "STMT_EXPRESSION";
@@ -150,7 +151,7 @@ void debug_statement(Statement* statement) {
     printf("Statement: {\n\t\t");
     printf("Type: %s,\n\t\t", print_statement_type(statement->type));
     switch (statement->type) {
-        case STMT_ASSIGN: {
+        case STMT_INSTANTIATE: {
             char literal[MAX_TOKEN_LENGTH];
             if (!get_literal(&statement->token, literal, sizeof(literal))) {
                 ERROR("Unable to get string literal for use in debugging statements");
@@ -246,6 +247,8 @@ int disassemble_instruction(Chunk* chunk, int offset) {
         return simple_instruction("OP_PRINT", offset);
     case OP_DEFINE_GLOBAL:
         return constant_instruction("OP_DEFINE_GLOBAL", chunk, offset);
+    case OP_SET_GLOBAL:
+        return constant_instruction("OP_SET_GLOBAL", chunk, offset);
     case OP_GET_GLOBAL:
         return constant_instruction("OP_GET_GLOBAL", chunk, offset);
     case OP_GREATER:

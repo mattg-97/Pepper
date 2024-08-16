@@ -22,6 +22,7 @@ static void free_statement(Statement* stmt) {
             free_expression(stmt->value);
             break;
         case STMT_ASSIGN:
+        case STMT_INSTANTIATE:
             free_expression(stmt->value);
             // Assuming name is not dynamically allocated
             break;
@@ -54,6 +55,7 @@ static void free_expression(Expression* expr) {
             }
             break;
         // Add cases for other expression types as needed
+        case EXPR_IDENT:
         case EXPR_INT:
         case EXPR_FLOAT:
         case EXPR_BOOL:
@@ -257,8 +259,8 @@ static bool expect_peek(Parser* parser, TokenType type) {
     }
 }
 
-static void parse_assignment_statement(Parser* parser, Statement* statement) {
-    statement->type = STMT_ASSIGN;
+static void parse_instantiate_statement(Parser* parser, Statement* statement) {
+    statement->type = STMT_INSTANTIATE;
     statement->token = parser->current_token;
 
     if (!expect_peek(parser, TOKEN_ASSIGN)) {
@@ -489,10 +491,33 @@ static void parse_print_statement(Parser* parser, Statement* statement) {
     consume(parser, TOKEN_DOT, "Expected '.' after expression");
 }
 
+static void parse_assignment_statement(Parser* parser, Statement* statement) {
+    statement->type = STMT_ASSIGN;
+    statement->token = parser->current_token;
+
+    if (!expect_peek(parser, TOKEN_EQUAL)) {
+        return;
+    }
+    Identifier ident = {.token = parser->current_token};
+    if (!get_literal(&statement->token, ident.value, sizeof(ident.value))) {
+        ERROR("Unable to get ident value from string literal");
+        exit(EXIT_FAILURE);
+    }
+    statement->name = ident;
+    next_token(parser);
+    statement->value = parse_expression(parser, LOWEST);
+
+    while (!current_token_is(parser, TOKEN_DOT)) {
+        next_token(parser);
+    }
+}
+
 static void parse_statement(Parser* parser, Statement* stmt) {
     switch (parser->current_token.type) {
         case TOKEN_IDENTIFIER: {
             if (parser->peek_token.type == TOKEN_ASSIGN) {
+                parse_instantiate_statement(parser, stmt);
+            } else if (parser->peek_token.type == TOKEN_EQUAL) {
                 parse_assignment_statement(parser, stmt);
             }
             break;

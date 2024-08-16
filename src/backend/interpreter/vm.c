@@ -25,9 +25,7 @@ VM* init_vm(ByteCode* byte_code) {
 
 void free_vm(VM* vm) {
     reset_stack(vm);
-    hash_table_destroy(vm->globals);
-    hash_table_destroy(vm->strings);
-    free(vm->chunk);
+    free(vm);
 }
 
 static Value pop(VM* vm) {
@@ -113,8 +111,18 @@ Result run(VM* vm) {
         }
         case OP_DEFINE_GLOBAL: {
             char* name = READ_STRING();
-            Value* global = peek(vm, 0);
+            Value* global = (Value*)malloc(sizeof(Value));
+            memcpy(global, peek(vm, 0), sizeof(Value));
             if (hash_table_add(vm->globals, name, global) == -1) {
+                ERROR("Undefined variable '%s'.", name);
+                return RUNTIME_ERROR;
+            }
+            pop(vm);
+            break;
+        }
+        case OP_SET_GLOBAL: {
+            char* name = READ_STRING();
+            if (hash_table_get(vm->globals, name) == NULL) {
                 ERROR("Undefined variable '%s'.", name);
                 return RUNTIME_ERROR;
             }

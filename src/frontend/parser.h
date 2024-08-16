@@ -28,7 +28,8 @@ typedef enum {
 } ExpressionType;
 
 typedef enum {
-    STMT_ASSIGN = 1,
+    STMT_INSTANTIATE = 1,
+    STMT_ASSIGN,
     STMT_RETURN,
     STMT_EXPRESSION,
     STMT_PRINT,
